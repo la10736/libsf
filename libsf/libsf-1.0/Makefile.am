@@ -1,1 +1,0 @@
-SUBDIRS=libsf include exampleProgram
