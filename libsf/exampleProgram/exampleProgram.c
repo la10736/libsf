@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
 	if (argc < 4) {
 		printf(
-				"Usage: sizefunctions.exe nameSizeGraph nameFileValues outputFile \n");
+				"Usage: exampleProgram nameSizeGraph nameFileValues outputFile \n");
 		exit(-1);
 	}
 	if ((fp = fopen(argv[1], "r")) == NULL) {
