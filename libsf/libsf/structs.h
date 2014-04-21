@@ -48,6 +48,7 @@ struct L_node{
 struct Graph{
 	struct Node	*first;
 	int		n_nodes;
+	int 	max_nodes;
 };
 
 typedef struct Node Node;

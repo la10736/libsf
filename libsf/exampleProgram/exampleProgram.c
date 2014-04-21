@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
 	for (i = 0; i < nv; i++) {
 		tt = fscanf(fp_meas, "%lf", &mf);
-		graph_set_node(G,i,mf);
+		graph_add_node(G,mf);
 	}
 
 	printf("Done\n");

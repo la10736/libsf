@@ -44,21 +44,21 @@ void del_ang_pt(ang_pt **id);
 
 // FUNCTIONS
 
-Graph *new_graph(int n_nodes) {
+/* Create a Graph with max n nodes
+ * @param n the max numbers of nodes
+ * @return the graph pointer
+ */
+Graph *new_graph(int n) {
 	Graph *G = (Graph *) malloc(sizeof(Graph));
 	int i;
 
-	if (!(G->first = (Node *) malloc(n_nodes * sizeof(Node)))) {
+	if (!(G->first = (Node *) malloc(n * sizeof(Node)))) {
 		fprintf(stdout, " in new_graph : can not allocate memory\n");
 		exit(1);
 	}
 
-	G->n_nodes = n_nodes;
-	for (i = 0; i < n_nodes; i++) {
-		G->first[i].val = (float) 0.0;
-		G->first[i].visit = 0;
-		G->first[i].l_adj = NULL;
-	}
+	G->n_nodes = 0;
+	G->max_nodes = n;
 	return G;
 }
 
@@ -74,8 +74,18 @@ void loc_add_new_edge_graph(Node *from, Node *to) {
 	from->l_adj = new_edge;
 }
 
-void add_new_edge_graph(Graph *G, int from, int to) {
-	loc_add_new_edge_graph(&G->first[from], &G->first[to]);
+/* Add new edge to the graph G from the node n to the node m
+ * @param G the Graph
+ * @param n the node where the edge starts
+ * @param m the node where the edge ends
+ * @return 0 in case of success, <0 otherwise
+ */
+int add_new_edge_graph(Graph *G, int n, int m) {
+	if (n>=0 && m>=0 && n < G->n_nodes && m< G->n_nodes){
+		loc_add_new_edge_graph(&G->first[n], &G->first[m]);
+		return 0;
+	}
+	return -1;
 }
 
 void erase_edge_graph(L_node **prev_id) {
@@ -578,8 +588,33 @@ void destroy_graph(Graph *G) {
 	return;
 }
 
-void graph_set_node(Graph *G,int node, double val){
-	G->first[node].val = val;
+/* Add a node to Graph g with value val
+ * @param g the Graph
+ * @param val the value
+ * @return the index of the node if >=0 and <0 if there aren't any space in the graph
+ */
+int graph_add_node(Graph *G, double val){
+	if (G->n_nodes < G->max_nodes){
+		int index = G->n_nodes++;
+		G->first[index].val = val;
+		G->first[index].visit = 0;
+		G->first[index].l_adj = NULL;
+		return index;
+	}
+	return -1;
+}
+
+/* Set the value of the node if the index is less of graph size
+ * @param index the index of the node
+ * @param val the value
+ * @return 0 is success <0 othrewise
+ */
+int graph_set_node(Graph *G,int node, double val){
+	if (node >=0 && node < G->n_nodes){
+		G->first[node].val = val;
+		return 0;
+	}
+	return -1;
 }
 
 

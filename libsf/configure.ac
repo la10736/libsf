@@ -12,6 +12,8 @@ AM_INIT_AUTOMAKE
 dnl this allows us specify individual liking flags for each target
 AM_PROG_CC_C_O 
 
+AM_PATH_CHECK()
+
 dnl Initialize Libtool
 LT_INIT
 
@@ -22,5 +24,6 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile
                 exampleProgram/Makefile
                 libsf/Makefile
-                include/Makefile)
+                include/Makefile
+                tests/Makefile)
 AC_OUTPUT

@@ -8,7 +8,7 @@ lib_LTLIBRARIES = libsf.la
 # Build information for each library
 
 # Sources for libTest
-libsf_la_SOURCES = libsf.c
+libsf_la_SOURCES = libsf.c size_functions.c
 
 # Linker options libTestProgram
 libsf_la_LDFLAGS = 
