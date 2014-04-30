@@ -1,3 +1,9 @@
 /out
 /Makefile
 /.deps
+/.libs
+/check_libsf
+/check_libsf-check_libsf.o
+/check_libsf.log
+/check_libsf.trs
+/test-suite.log

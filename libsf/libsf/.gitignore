@@ -5,3 +5,5 @@
 /.deps
 /.libs
 /Makefile.in
+/libsf_la-size_functions.lo
+/libsf_la-size_functions.o
