@@ -26,19 +26,34 @@ int main(int argc, char *argv[]) {
 	int tt;
 
 	char str1[256] = "";
+	char *sg;
+	char *ms_f;
+	char *of;
+	int legacy = 0;
+	int ii = 1;
 
-	ang_pt *sf;
+	sf *sf;
 
 	if (argc < 4) {
 		printf(
 				"Usage: exampleProgram nameSizeGraph nameFileValues outputFile \n");
 		exit(-1);
 	}
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if (argc >= 4){
+		if (!strcmp("-l",argv[ii])){
+			legacy = 1;
+			ii++;
+			printf("Legacy output mode\n");
+		}
+	}
+	sg = argv[ii++];
+	ms_f = argv[ii++];
+	of = argv[ii++];
+	if ((fp = fopen(sg, "r")) == NULL) {
 		printf("Error (Reading): unable to open .size!\n");
 		return (0);
 	}
-	if ((fp_meas = fopen(argv[2], "r")) == NULL) {
+	if ((fp_meas = fopen(ms_f, "r")) == NULL) {
 		printf("Error (Reading): unable to open measuring function file!\n");
 		return (0);
 	}
@@ -71,11 +86,11 @@ int main(int argc, char *argv[]) {
 
 	destroy_graph(G);
 
-	write_ang_pt(sf, argv[3]);
+	write_ang_pt(sf, of, legacy);
 
 	printf("Sf printed\n");
 
-	destroy_all_ang_pt(&sf);
+	sf_destroy(sf);
 
 	return 0;
 

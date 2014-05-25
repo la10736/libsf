@@ -16,7 +16,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 traindir = 'train'
 outdir = 'out'
-ex = "../exampleProgram/exampleProgram"
+ex = "../exampleProgram/exampleProgram "
 
 if __name__ == "__main__":
     try:

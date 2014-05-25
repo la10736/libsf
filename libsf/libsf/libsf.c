@@ -10,15 +10,11 @@
 
 #include "structs.h"
 
-#define MAX_SIZE_TYPEVAL DBL_MAX
-
-ang_pt *simpleTree2ang_pt(STNode_queue_struct *stqueue);
+sf *simpleTree2ang_pt(STNode_queue_struct *stqueue);
 STNode *STNode_dequeue(STNode_queue_struct *stqueue);
-STNode *delete_STNode(STNode *nd);
-void ins_ang_pt(ang_pt **, ang_pt *);
-ang_pt *new_ang_pt(double x, double y);
+STNode *up_and_pop_STNode(STNode *nd);
 STNode_queue_struct *SEGraph2STtree(SEGraph *H);
-STNode *new_STNode(double phi);
+STNode *new_STNode(const SENode *s);
 STNode_queue_struct *new_STNode_queue_struct();
 void STNode_queue(STNode_queue_struct *stqueue, STNode *to_queue);
 void delSENode(SEGraph *G, SENode *node);
@@ -37,10 +33,6 @@ djset *popDjsetStack(djsetStack **top);
 void moveAdjList(SENode *from, SENode *to);
 SEList *addSEedge(SENode *from, SENode *to);
 int compar(Node **V, Node **W);
-
-void write_ang_pt(ang_pt *ang, char *angout);
-void destroy_all_ang_pt(ang_pt **first_id);
-void del_ang_pt(ang_pt **id);
 
 // FUNCTIONS
 
@@ -81,7 +73,7 @@ void loc_add_new_edge_graph(Node *from, Node *to) {
  * @return 0 in case of success, <0 otherwise
  */
 int add_new_edge_graph(Graph *G, int n, int m) {
-	if (n>=0 && m>=0 && n < G->n_nodes && m< G->n_nodes){
+	if (n >= 0 && m >= 0 && n < G->n_nodes && m < G->n_nodes) {
 		loc_add_new_edge_graph(&G->first[n], &G->first[m]);
 		return 0;
 	}
@@ -100,27 +92,82 @@ void erase_edge_graph(L_node **prev_id) {
 	return;
 }
 
-ang_pt *newDeltaStarReductionAlgorithm(Graph *G) {
+sf *newDeltaStarReductionAlgorithm(Graph *G) {
 	return (simpleTree2ang_pt(SEGraph2STtree(deltaStarRed(G))));
 }
 
-ang_pt *simpleTree2ang_pt(STNode_queue_struct *stqueue) {
+static ssf *_get_ssf(STNode *node){
+	/* Climb the tree and looking for the first node marked with
+	 * the previous ssf (the one for that connected componed).
+	 */
+	while (node && !node->mark){
+		node = node->parent;
+	}
+	if(node){
+		return (ssf *) node->mark;
+	}
+	return NULL;
+}
+
+static void _set_ssf(STNode *node, ssf *ssf){
+	/* Climb the tree, store the ssf in mark and stop at the first node
+	 * marked. If the old mark is not the same of the new it will
+	 * print a warning message.
+	 */
+	while (node && !node->mark){
+		node->mark = (void *) ssf;
+		node = node->parent;
+	}
+	if(node && node->mark != ssf){
+		printf("BUG: More ssf on the same connected componed\n");
+	}
+}
+
+sf *simpleTree2ang_pt(STNode_queue_struct *stqueue) {
 
 	STNode *leaf, *node;
-	ang_pt *ret = NULL;
+	sf *sf = sf_create();
+	int n = 0;
 	double x;
 
 	while (stqueue->first) {
+		ssf *ssf = NULL;
 		while ((leaf = STNode_dequeue(stqueue))->n_children != 0)
 			;
 		x = leaf->phi;
+		ssf = _get_ssf(leaf);
+		if (!ssf){
+			ssf = ssf_void(sf);
+			ssf_set_max_y(ssf, leaf->max_phi, 0);
+		}
+		_set_ssf(leaf, ssf);
+		if (leaf->max_phi > ssf_get_max_measuring_function(ssf)){
+			ssf_set_max_y(ssf, leaf->max_phi, 0);
+		}
 		node = leaf;
-		while ((node = delete_STNode(node)) && node->n_children == 0)
-			;
-		ins_ang_pt(&ret, new_ang_pt(x, (node) ? node->phi : MAX_SIZE_TYPEVAL));
+		node = up_and_pop_STNode(node);
+		if (leaf->n_children == 0){
+			free(leaf);
+			leaf = node;
+		}
+		while (node && node->n_children == 0) {
+			node = up_and_pop_STNode(node);
+			if (leaf->n_children == 0){
+				free(leaf);
+				leaf = node;
+			}
+		}
+		if (!node) {
+			ssf_set_min_x(ssf, x, 0);
+		} else {
+			if (node->max_phi > ssf_get_max_measuring_function(ssf)){
+				ssf_set_max_y(ssf, node->max_phi, 0);
+			}
+			ssf_add_ang_pt( ssf, x, node->phi);
+		}
 	}
 	free(stqueue);
-	return (ret);
+	return sf;
 }
 
 STNode *STNode_dequeue(STNode_queue_struct *stqueue) {
@@ -134,11 +181,10 @@ STNode *STNode_dequeue(STNode_queue_struct *stqueue) {
 	return (ret);
 }
 
-STNode *delete_STNode(STNode *nd) {
+STNode *up_and_pop_STNode(STNode *nd) {
 	STNode *ret = nd->parent;
 	if (nd->n_children != 0)
 		return (ret);
-	free(nd);
 	if (ret)
 		ret->n_children--;
 
@@ -174,10 +220,10 @@ STNode_queue_struct *SEGraph2STtree(SEGraph *H) {
 	while (actualSENode) {
 
 		STNode_queue(Hnew,
-				actualSENode->stlink = new_STNode(actualSENode->phi));
+				actualSENode->stlink = new_STNode(actualSENode));
 		actualSENode = actualSENode->next;
 	}
-	//Aggiusta i link nell'albero
+	//Fix the tree links
 
 	while (H->first) {
 		cur = H->first->start;
@@ -192,13 +238,15 @@ STNode_queue_struct *SEGraph2STtree(SEGraph *H) {
 	return Hnew;
 }
 
-STNode *new_STNode(double phi) {
+STNode *new_STNode(const SENode *s) {
 	STNode *ret = (STNode *) malloc(sizeof(STNode));
 
-	ret->phi = phi;
+	ret->phi = s->phi;
+	ret->max_phi = s->max_phi;
 	ret->n_children = 0;
 	ret->next = NULL;
 	ret->parent = NULL;
+	ret->mark = NULL;
 
 	return (ret);
 }
@@ -349,8 +397,13 @@ fprintf(stdout,"\nRipartiti in Allocazione = %ld (ms) *** QuickSort = %ld (ms)  
 				}
 				cur = cur->next;
 			}
-			if (C->next == NULL) { // C contiene un solo elemento
-				link(t = popDjsetStack(&C), s);
+			if (C->next == NULL) { // Just one element in C
+				/* The node pointed from s (v_i) is greater then the one pointed
+				 * from t -> update the max of measuring function on the node
+				 * */
+				t = popDjsetStack(&C);
+				t->lbl->max_phi = v_i->val;
+				link(t, s);
 			} else {
 				s->lbl = w = addSENode(H, v_i->val);
 				while (C != NULL) {
@@ -453,6 +506,7 @@ SENode* addSENode(SEGraph *G, double phi) {
 		G->first->prev = node;
 	}
 	node->phi = phi;
+	node->max_phi = phi;
 	node->start = NULL;
 	node->end = NULL;
 	node->stlink = NULL;
@@ -575,8 +629,8 @@ int compar(Node **V, Node **W) {
 
 void destroy_graph(Graph *G) {
 	int i;
-	if (G){
-		if (G->first){
+	if (G) {
+		if (G->first) {
 			for (i = 0; i < G->n_nodes; i++) {
 				while (G->first[i].l_adj != NULL)
 					erase_edge_graph(&(G->first[i].l_adj));
@@ -593,8 +647,8 @@ void destroy_graph(Graph *G) {
  * @param val the value
  * @return the index of the node if >=0 and <0 if there aren't any space in the graph
  */
-int graph_add_node(Graph *G, double val){
-	if (G->n_nodes < G->max_nodes){
+int graph_add_node(Graph *G, double val) {
+	if (G->n_nodes < G->max_nodes) {
 		int index = G->n_nodes++;
 		G->first[index].val = val;
 		G->first[index].visit = 0;
@@ -609,46 +663,10 @@ int graph_add_node(Graph *G, double val){
  * @param val the value
  * @return 0 is success <0 othrewise
  */
-int graph_set_node(Graph *G,int node, double val){
-	if (node >=0 && node < G->n_nodes){
+int graph_set_node(Graph *G, int node, double val) {
+	if (node >= 0 && node < G->n_nodes) {
 		G->first[node].val = val;
 		return 0;
 	}
 	return -1;
-}
-
-
-void write_ang_pt(ang_pt *ang, char *angout) {
-	FILE *pmf;
-	int k, l;
-	ang_pt *car;
-	pmf = fopen(angout, "w");
-	car = ang;
-	k = l = 0;
-	while (car != NULL) {
-		if (car->y < MAX_SIZE_TYPEVAL)
-			fprintf(pmf, "p %d %f %f\n", ++k, car->x, car->y);
-		else
-			fprintf(pmf, "l %d %f\n", ++l, car->x);
-		car = car->next;
-	}
-	fclose(pmf);
-	return;
-}
-
-void destroy_all_ang_pt(ang_pt **first_id) {
-
-	while (*first_id != NULL)
-		del_ang_pt(first_id);
-	return;
-}
-
-void del_ang_pt(ang_pt **id) {
-	ang_pt *dead;
-
-	dead = *id;
-	*id = dead->next;
-
-	free(dead);
-	return;
 }

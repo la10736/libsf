@@ -119,9 +119,11 @@ typedef struct P_list P_list;
 
 typedef struct STNode{
   double phi;
+  double max_phi;
   struct STNode *parent;
   struct STNode *next;
   int n_children;
+  void *mark;
 }STNode;
 
 typedef struct STNode_queue_struct{
@@ -132,6 +134,7 @@ typedef struct STNode_queue_struct{
 
 typedef struct SENode{
     double phi;
+    double max_phi;
     struct SEList *start;
     struct SEList *end;
     struct SENode *next;

@@ -1,6 +1,8 @@
 #ifndef libTest_H
 #define libTest_H
 
+#define MAX_SIZE_TYPEVAL DBL_MAX
+
 typedef struct sf sf; /**> Size function set: a collection of simple size function*/
 typedef struct ssf ssf; /**> Simple Size function a size function of a connected graph.
  	 	 	 	 	 	 	 That means just one corner line*/
@@ -34,7 +36,7 @@ int graph_set_node(Graph *G, int index, double val);
  * @return 0 in case of success, <0 otherwise
  */
 int add_new_edge_graph(Graph *G, int n, int m);
-ang_pt *newDeltaStarReductionAlgorithm(Graph *G);
+sf *newDeltaStarReductionAlgorithm(Graph *G);
 
 /* Create a size function */
 sf *sf_create(void);
@@ -48,6 +50,19 @@ void sf_destroy(sf *sf);
  * @return a new simple size function of sf if all ok NULL otherwise (for instance min_x>max_y)
  */
 ssf *ssf_create(sf *sf, double min_x, double max_y);
+/* Create a new void simple size function where minimum (the corner line coordinate)
+ * and maximum are respectively -MAX_SIZE_VAL and MAX_SIZE_VAL
+ */
+ssf *ssf_void(sf *sf);
+/* Change the minimum of ssf (AKA cornel line). If check is true check if all angular point are
+ * greather than min_x and don't change the value if check fail.
+ * @param ssf the simple size function to change
+ * @param min_x the new value
+ * @param check if true check if all angular points are greather than min_x before change
+ * the value.
+ * @return 0 if change the value < 0 otherwise.
+ */
+int ssf_set_min_x(ssf *ssf, double min_x, int check);
 /* Change the maximum of ssf. If check is true check if all angular point are less
  * than max_y and don't change the value if check fail.
  * @param ssf the simple size function to change
@@ -84,22 +99,56 @@ const ang_pt *ssf_get_angular_points(ssf *ssf);
  * @param index the index
  * @return the index-nt simple size function of sf. NULL if not exists.
  */
-ssf *sf_get_ssf(sf *sf, int index);
+ssf *sf_get_ssf(const sf *sf, int index);
 /* Return the number of simple size functions in the size function sf.
  * @param sf the size functition
  * @return the number of simple size function of sf.
  */
-int sf_get_n_ssf(sf *sf);
+int sf_get_n_ssf(const sf *sf);
 /* Return the number of angular points in the simple size function ssf.
  * @param ssf the simple size functition
  * @return the number of angular points simple size function of ssf.
  */
-int ssf_get_n_ang_pt(ssf *ssf);
+int ssf_get_n_ang_pt(const ssf *ssf);
 /* Return x of angular point */
 double ang_pt_x(const ang_pt *p);
 /* Return y of angular point */
 double ang_pt_y(const ang_pt *p);
 /* Return next angular point */
 const ang_pt *ang_pt_next(const ang_pt *p);
+/* Return 0 if if the ssf a is the same of ssf b. !0 otherwise.
+ * @param a first ssf
+ * @paarm b second ssf
+ * @return 0 if a==b !=0 othewise*/
+int ssf_compare(const ssf *a,const ssf *b);
+/* Copy the sf a .
+ * @param a the sh to copy
+ * @return a copy of a or NULL if some error occur*/
+sf *sf_copy(const sf *a);
+/* Return 0 if if the sf a is the same of sf b. !0 otherwise.
+ * @param a first sf
+ * @paarm b second sf
+ * @return 0 if a==b !=0 othewise*/
+int sf_compare(const sf *a,const sf *b);
+
+/* Write the size function sf in the file at the path angout.
+ * If legacy write the corner lines in the legacy format of
+ * l <x value of the corner line>
+ * Otherwise if not legacy mode the corner line will be write
+ * as
+ * l <x value of the corner line> <the max value of relative connected component of the graph>
+ * In every case, the points after a corner line will be all part
+ * of the same connected component until another corner line will be present.
+ *
+ * @param sf the size function to write
+ * @param angout the path of the output file
+ * @param legacy the flag that activate or not the old legacy output mode
+ *
+ */
+void write_ang_pt(sf *sf, char *angout, int legacy);
+
+
+/*Dump size function on std out. JUST for debugging */
+void dump_sf(sf *sf);
 
 #endif
