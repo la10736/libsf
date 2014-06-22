@@ -146,3 +146,69 @@ class SimpleSizeFunction(SimpleSizeFunctionOld):
                 return super(SimpleSizeFunction,self).__eq__(other)
             return False
         return self._m == other._m and super(SimpleSizeFunction,self).__eq__(other)
+
+    def copy(self):
+        return SimpleSizeFunction(self._cl, self._m, self._points)
+
+def check_abstract(f):
+    def new_f(self, *args, **kwags):
+        if self.ssf_type is None:
+            raise NotImplementedError()
+        return f(self, *args, **kwags)
+    new_f.__name__ = f.__name__
+    return new_f
+
+class _AbstractSizeFunction(object):
+    
+    ssf_type = None
+    
+    def __init__(self):
+        self._ssfs = []
+    
+    @check_abstract
+    def new_ssf(self, *args, **kwargs):
+        ssf = self.ssf_type(*args, **kwargs)
+        self._add(ssf)
+        return ssf
+    
+    def _add(self, ssf):
+        self._ssfs.append(ssf)
+    
+    @check_abstract
+    def __eq__(self, other):
+        if not isinstance(other, _AbstractSizeFunction):
+            return False
+        m = other._ssfs[:]
+        for ssf in self._ssfs:
+            if ssf in m:
+                m.remove(ssf)
+            else:
+                return False
+        return not m
+    
+    @check_abstract
+    def add(self, ssf):
+        if ssf.__class__ != self.ssf_type:
+            raise ValueError("You can just add simple size function of type %s"%
+                             self.ssf_type.__class__.__name__)
+        self._add(ssf.copy())
+
+    def get_ssfs(self):
+        return [ssf.copy() for ssf in self._ssfs]
+    
+    @property
+    def ssfs(self):
+        return self.get_ssfs()
+    
+    def copy(self):
+        ret = self.__class__()
+        for ssf in self._ssfs:
+            ret.add(ssf)
+        return ret
+
+class SizeFunctionOld(_AbstractSizeFunction):
+    ssf_type = SimpleSizeFunctionOld
+
+class SizeFunction(_AbstractSizeFunction):
+    ssf_type = SimpleSizeFunction
+        

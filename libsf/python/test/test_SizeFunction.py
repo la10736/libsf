@@ -5,7 +5,9 @@ Created on 21/giu/2014
 '''
 import unittest
 import sf.SizeFunction as SF
-from sf.SizeFunction import _AngularPoint as AP, SimpleSizeFunctionOld
+from sf.SizeFunction import _AngularPoint as AP 
+from sf.SizeFunction import SimpleSizeFunctionOld
+from sf.SizeFunction import SimpleSizeFunction
 
 class Test_AngularPoint(unittest.TestCase):
 
@@ -67,17 +69,17 @@ class Test_AngularPoint(unittest.TestCase):
 class Test_SimpleSizeFunctionOld(unittest.TestCase):
     
     def test_Create(self):
-        self.assertIsNotNone(SF.SimpleSizeFunctionOld(-2))
-        self.assertRaises(TypeError, SF.SimpleSizeFunctionOld)
-        self.assertRaises(ValueError, SF.SimpleSizeFunctionOld, "pluto")
-        self.assertRaises(ValueError, SF.SimpleSizeFunctionOld, None)
+        self.assertIsNotNone(SimpleSizeFunctionOld(-2))
+        self.assertRaises(TypeError, SimpleSizeFunctionOld)
+        self.assertRaises(ValueError, SimpleSizeFunctionOld, "pluto")
+        self.assertRaises(ValueError, SimpleSizeFunctionOld, None)
     
     def test_cl(self):
-        ssf = SF.SimpleSizeFunctionOld(2)
+        ssf = SimpleSizeFunctionOld(2)
         self.assertEqual(ssf.cornerline, 2)
     
     def test_add_point(self):
-        ssf = SF.SimpleSizeFunctionOld(-2)
+        ssf = SimpleSizeFunctionOld(-2)
         ssf.add_point(1, 2)
         ap = AP(1, 2)
         self.assertIn(ap, ssf.get_points())
@@ -88,9 +90,9 @@ class Test_SimpleSizeFunctionOld(unittest.TestCase):
         self.assertEqual(2, ssf.points.count(ap))
     
     def test_equal(self):
-        ssf1 = SF.SimpleSizeFunctionOld(-2)
+        ssf1 = SimpleSizeFunctionOld(-2)
         ssf1.add_point(1, 2)
-        ssf2 = SF.SimpleSizeFunctionOld(-2)
+        ssf2 = SimpleSizeFunctionOld(-2)
         ssf2.add_point(1, 2)
         self.assertEqual(ssf1, ssf2)
         ssf2.add_point(2, 3)
@@ -101,8 +103,8 @@ class Test_SimpleSizeFunctionOld(unittest.TestCase):
         self.assertNotEqual(ssf1, ssf2)
         ssf1.add_point(2, 3)
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunctionOld(0)
-        ssf2 = SF.SimpleSizeFunctionOld(0.5)
+        ssf1 = SimpleSizeFunctionOld(0)
+        ssf2 = SimpleSizeFunctionOld(0.5)
         self.assertNotEqual(ssf1, ssf2)
     
     def test_equal_fail_other_type(self):
@@ -113,24 +115,24 @@ class Test_SimpleSizeFunctionOld(unittest.TestCase):
         self.assertNotEqual(SimpleSizeFunctionOld(-2), a())
     
     def test_not_equal(self):
-        ssf1 = SF.SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
+        ssf1 = SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
         ssf2 = ssf1.copy()
         self.assertFalse(ssf1 != ssf2)
     
     def test_Create_points(self):
-        ssf1 = SF.SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
-        ssf2 = SF.SimpleSizeFunctionOld(-2)
+        ssf1 = SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
+        ssf2 = SimpleSizeFunctionOld(-2)
         ssf2.add_point(1, 2)
         ssf2.add_point(2, 3)
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunctionOld(-2, [AP(1, 2), AP(2, 3)])
+        ssf1 = SimpleSizeFunctionOld(-2, [AP(1, 2), AP(2, 3)])
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunctionOld(-2, ((1, 2), (2, 3)))
+        ssf1 = SimpleSizeFunctionOld(-2, ((1, 2), (2, 3)))
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunctionOld(-2, (AP(1, 2), AP(2, 3)))
+        ssf1 = SimpleSizeFunctionOld(-2, (AP(1, 2), AP(2, 3)))
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunctionOld(-2, [(1, 2), AP(2, 3), (3, 4), AP(4, 5)])
-        ssf2 = SF.SimpleSizeFunctionOld(-2)
+        ssf1 = SimpleSizeFunctionOld(-2, [(1, 2), AP(2, 3), (3, 4), AP(4, 5)])
+        ssf2 = SimpleSizeFunctionOld(-2)
         ssf2.add_point(1, 2)
         ssf2.add_point(2, 3)
         ssf2.add_point(3, 4)
@@ -138,13 +140,14 @@ class Test_SimpleSizeFunctionOld(unittest.TestCase):
         self.assertEqual(ssf1, ssf2)
 
     def test_Create_nominal_args(self):
-        ssf1 = SF.SimpleSizeFunctionOld(cl=-2, points=[(1, 2), (2, 3)])
-        ssf2 = SF.SimpleSizeFunctionOld(points=[(1, 2), (2, 3)], cl=-2)
+        ssf1 = SimpleSizeFunctionOld(cl=-2, points=[(1, 2), (2, 3)])
+        ssf2 = SimpleSizeFunctionOld(points=[(1, 2), (2, 3)], cl=-2)
         self.assertEqual(ssf1, ssf2)
     
     def test_copy(self):
-        ssf1 = SF.SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
+        ssf1 = SimpleSizeFunctionOld(-2, [(1, 2), (2, 3)])
         ssf2 = ssf1.copy()
+        self.assertIsInstance(ssf2, SimpleSizeFunctionOld)
         self.assertEqual(ssf1, ssf2)
         self.assertFalse(ssf1 is ssf2)
         ap = ssf1._points[0]
@@ -154,14 +157,14 @@ class Test_SimpleSizeFunctionOld(unittest.TestCase):
 class Test_SimpleSizeFunction(unittest.TestCase):
     
     def test_Create(self):
-        ssf = SF.SimpleSizeFunction(-2, 3)
+        ssf = SimpleSizeFunction(-2, 3)
         self.assertIsInstance(ssf, SimpleSizeFunctionOld)
-        self.assertRaises(TypeError, SF.SimpleSizeFunction)
-        self.assertRaises(ValueError, SF.SimpleSizeFunction, "pluto", 3)
-        self.assertRaises(ValueError, SF.SimpleSizeFunction, 3, "pluto")
+        self.assertRaises(TypeError, SimpleSizeFunction)
+        self.assertRaises(ValueError, SimpleSizeFunction, "pluto", 3)
+        self.assertRaises(ValueError, SimpleSizeFunction, 3, "pluto")
 
     def test_add_point(self):
-        ssf = SF.SimpleSizeFunction(-2, 5)
+        ssf = SimpleSizeFunction(-2, 5)
         ssf.add_point(1, 2)
         ap = AP(1, 2)
         self.assertIn(ap, ssf.get_points())
@@ -173,13 +176,13 @@ class Test_SimpleSizeFunction(unittest.TestCase):
         self.assertEqual(2, ssf.points.count(ap))
     
     def test_maximum(self):
-        ssf = SF.SimpleSizeFunction(2)
+        ssf = SimpleSizeFunction(2)
         self.assertIsNone(ssf.maximum)
 
     def test_equal(self):
-        ssf1 = SF.SimpleSizeFunction(-2, 5)
+        ssf1 = SimpleSizeFunction(-2, 5)
         ssf1.add_point(1, 2)
-        ssf2 = SF.SimpleSizeFunction(-2, 5)
+        ssf2 = SimpleSizeFunction(-2, 5)
         ssf2.add_point(1, 2)
         self.assertEqual(ssf1, ssf2)
         ssf2.add_point(2, 3)
@@ -190,27 +193,156 @@ class Test_SimpleSizeFunction(unittest.TestCase):
         self.assertNotEqual(ssf1, ssf2)
         ssf1.add_point(2, 3)
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunction(0)
-        ssf2 = SF.SimpleSizeFunction(0)
+        ssf1 = SimpleSizeFunction(0)
+        ssf2 = SimpleSizeFunction(0)
         self.assertEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunction(0, 3)
-        ssf2 = SF.SimpleSizeFunction(0, 4)
+        ssf1 = SimpleSizeFunction(0, 3)
+        ssf2 = SimpleSizeFunction(0, 4)
         self.assertNotEqual(ssf1, ssf2)
-        ssf2 = SF.SimpleSizeFunction(0)
+        ssf2 = SimpleSizeFunction(0)
         self.assertNotEqual(ssf1, ssf2)
-        ssf1 = SF.SimpleSizeFunction(0)
-        ssf2 = SF.SimpleSizeFunctionOld(0)
-        self.assertEqual(ssf1,ssf2)
-        self.assertEqual(ssf2,ssf1)
-        ssf1 = SF.SimpleSizeFunction(0,3)
-        self.assertNotEqual(ssf1,ssf2)
-        self.assertNotEqual(ssf2,ssf1)
+        ssf1 = SimpleSizeFunction(0)
+        ssf2 = SimpleSizeFunctionOld(0)
+        self.assertEqual(ssf1, ssf2)
+        self.assertEqual(ssf2, ssf1)
+        ssf1 = SimpleSizeFunction(0, 3)
+        self.assertNotEqual(ssf1, ssf2)
+        self.assertNotEqual(ssf2, ssf1)
         
     def test_Create_nominal_args(self):
-        ssf1 = SF.SimpleSizeFunction(cl=-2, M=5, points=[(1, 2), (2, 3)])
-        ssf2 = SF.SimpleSizeFunction(points=[(1, 2), (2, 3)], cl=-2, M=5)
+        ssf1 = SimpleSizeFunction(cl=-2, M=5, points=[(1, 2), (2, 3)])
+        ssf2 = SimpleSizeFunction(points=[(1, 2), (2, 3)], cl=-2, M=5)
         self.assertEqual(ssf1, ssf2)
-            
+
+    def test_copy(self):
+        ssf1 = SimpleSizeFunction(-2, 5, [(1, 2), (2, 3)])
+        ssf2 = ssf1.copy()
+        self.assertIsInstance(ssf2, SimpleSizeFunction)
+        self.assertEqual(ssf1, ssf2)
+        self.assertFalse(ssf1 is ssf2)
+        ap = ssf1._points[0]
+        for p in ssf2._points:
+            self.assertFalse(ap is p)
+
+class Test_SizeFunctionOld(unittest.TestCase):
+    
+    def test_Create(self):
+        SF.SizeFunctionOld()
+    
+    def test_new_ssf(self):
+        sf = SF.SizeFunctionOld()
+        ssf = sf.new_ssf(cl=-2, points=((0, 1), (1, 2)))
+        self.assertIsInstance(ssf, SimpleSizeFunctionOld)
+        self.assertEqual(ssf, SimpleSizeFunctionOld(-2, ((0, 1), (1, 2))))
+    
+    def test_add(self):
+        sf = SF.SizeFunctionOld()
+        ssf = SimpleSizeFunctionOld(cl=-2, points=((0, 1), (1, 2)))
+        sf.add(ssf)
+        self.assertEqual(ssf, sf._ssfs[0])
+        self.assertFalse(ssf is sf._ssfs[0])
+        self.assertRaises(ValueError, sf.add,
+                          SimpleSizeFunction(-1, 5, ((1, 2), (1.5, 2.5))))
+
+    def test_equal(self):
+        sf1 = SF.SizeFunctionOld()
+        sf2 = SF.SizeFunctionOld()
+        self.assertEqual(sf1, sf2)
+        ssf1 = sf1.new_ssf(1)
+        self.assertNotEqual(sf1, sf2)
+        ssf2 = sf2.new_ssf(1)
+        self.assertEqual(sf1, sf2)
+        ssf1.add_point(2, 3)
+        self.assertNotEqual(sf1, sf2)
+        ssf2.add_point(2, 3)
+        self.assertEqual(sf1, sf2)
+        sf1.add(ssf1)
+        self.assertNotEqual(sf1, sf2)
+        sf2.add(ssf1)
+        self.assertEqual(sf1, sf2)
+    
+    def test_ssfs(self):
+        sf = SF.SizeFunctionOld()
+        ssf = sf.new_ssf(1)
+        ssf.add_point(2, 3)
+        ssfs = sf.ssfs
+        self.assertEqual(1, len(ssfs))
+        self.assertEqual(ssf, ssfs[0])
+        sf.add(ssf)
+        ssfs = sf.ssfs
+        self.assertEqual(2, len(ssfs))
+        self.assertEqual(ssf, ssfs[0])
+        self.assertEqual(ssf, ssfs[1])
+    
+    def test_copy(self):
+        sf1 = SF.SizeFunctionOld()
+        sf1.new_ssf(1).add_point(2, 3)
+        sf2 = sf1.copy()
+        self.assertIsInstance(sf2, SF.SizeFunctionOld)
+        self.assertEqual(sf1, sf2)
+        self.assertFalse(sf1 is sf2)
+        
+        
+class Test_SizeFunction(unittest.TestCase):
+    
+    def test_Create(self):
+        SF.SizeFunction()
+    
+    def test_new_ssf(self):
+        sf = SF.SizeFunction()
+        ssf = sf.new_ssf(cl=-2, M=5, points=((0, 1), (1, 2)))
+        self.assertIsInstance(ssf, SimpleSizeFunction)
+        self.assertEqual(ssf, SimpleSizeFunction(-2, 5, ((0, 1), (1, 2))))
+        ssf = sf.new_ssf(cl=-2, points=((0, 1), (1, 2)))
+        self.assertEqual(ssf, SimpleSizeFunction(-2, None, ((0, 1), (1, 2))))
+        
+    def test_add(self):
+        sf = SF.SizeFunction()
+        ssf = SimpleSizeFunction(cl=-2, M=5, points=((0, 1), (1, 2)))
+        sf.add(ssf)
+        self.assertEqual(ssf, sf._ssfs[0])
+        self.assertFalse(ssf is sf._ssfs[0])
+        self.assertRaises(ValueError, sf.add,
+                          SimpleSizeFunctionOld(-1, ((1, 2), (1.5, 2.5))))
+        
+    def test_equal(self):
+        sf1 = SF.SizeFunction()
+        sf2 = SF.SizeFunction()
+        self.assertEqual(sf1, sf2)
+        ssf1 = sf1.new_ssf(1, 5)
+        self.assertNotEqual(sf1, sf2)
+        ssf2 = sf2.new_ssf(1, 5)
+        self.assertEqual(sf1, sf2)
+        ssf1.add_point(2, 3)
+        self.assertNotEqual(sf1, sf2)
+        ssf2.add_point(2, 3)
+        self.assertEqual(sf1, sf2)
+        sf1.add(ssf1)
+        self.assertNotEqual(sf1, sf2)
+        sf2.add(ssf1)
+        self.assertEqual(sf1, sf2)
+    
+    def test_ssfs(self):
+        sf = SF.SizeFunction()
+        ssf = sf.new_ssf(1, 5)
+        ssf.add_point(2, 3)
+        ssfs = sf.ssfs
+        self.assertEqual(1, len(ssfs))
+        self.assertEqual(ssf, ssfs[0])
+        sf.add(ssf)
+        ssfs = sf.ssfs
+        self.assertEqual(2, len(ssfs))
+        self.assertEqual(ssf, ssfs[0])
+        self.assertEqual(ssf, ssfs[1])
+
+    def test_copy(self):
+        sf1 = SF.SizeFunction()
+        sf1.new_ssf(1).add_point(2, 3)
+        sf2 = sf1.copy()
+        self.assertIsInstance(sf2, SF.SizeFunction)
+        self.assertEqual(sf1, sf2)
+        self.assertFalse(sf1 is sf2)
+
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.test']
     unittest.main()
