@@ -238,9 +238,12 @@ class Test_SizeFunctionOld(unittest.TestCase):
     def test_add(self):
         sf = SF.SizeFunctionOld()
         ssf = SimpleSizeFunctionOld(cl=-2, points=((0, 1), (1, 2)))
-        sf.add(ssf)
+        ssf2 = sf.add(ssf)
         self.assertEqual(ssf, sf._ssfs[0])
         self.assertFalse(ssf is sf._ssfs[0])
+        self.assertIsInstance(ssf2, SimpleSizeFunctionOld)
+        self.assertEqual(ssf, ssf2)
+        self.assertIs(ssf2, sf._ssfs[0])
         self.assertRaises(ValueError, sf.add,
                           SimpleSizeFunction(-1, 5, ((1, 2), (1.5, 2.5))))
 

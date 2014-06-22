@@ -167,6 +167,8 @@ class _AbstractSizeFunction(object):
     
     @check_abstract
     def new_ssf(self, *args, **kwargs):
+        """Create and add new Simple Size Function.
+        """
         ssf = self.ssf_type(*args, **kwargs)
         self._add(ssf)
         return ssf
@@ -188,10 +190,17 @@ class _AbstractSizeFunction(object):
     
     @check_abstract
     def add(self, ssf):
+        """Add a copy of Simple Size Function ssf
+        @param ssf: The simple size function to add
+        @raise ValueError: if ssf is not the correct type
+        @return: the new ssf
+        """
         if ssf.__class__ != self.ssf_type:
             raise ValueError("You can just add simple size function of type %s"%
                              self.ssf_type.__class__.__name__)
-        self._add(ssf.copy())
+        ret = ssf.copy()
+        self._add(ret)
+        return ret
 
     def get_ssfs(self):
         return [ssf.copy() for ssf in self._ssfs]
@@ -207,8 +216,15 @@ class _AbstractSizeFunction(object):
         return ret
 
 class SizeFunctionOld(_AbstractSizeFunction):
+    """The size function object old legacy implementation.
+    It is a list of Simple Size Functions that don't care 
+    about the maximum of measuring function.
+    """
     ssf_type = SimpleSizeFunctionOld
 
 class SizeFunction(_AbstractSizeFunction):
+    """The size function object. It is a list of Simple Size 
+    Functions with the maximum of measuring function.
+    """
     ssf_type = SimpleSizeFunction
         
