@@ -403,25 +403,25 @@ START_TEST(test_sf_dot)
 
 	}END_TEST
 
-	START_TEST(test_sf_I)
-		{
-			/* case line */
-			Graph *G = new_graph(10);
-			int i;
-			for(i=0;i<10;++i){
-				graph_add_node(G, i);
-				if (i>0){
-					add_new_edge_graph(G,i-1,i);
-				}
+START_TEST(test_sf_I)
+	{
+		/* case line */
+		Graph *G = new_graph(10);
+		int i;
+		for (i = 0; i < 10; ++i) {
+			graph_add_node(G, i);
+			if (i > 0) {
+				add_new_edge_graph(G, i - 1, i);
 			}
-			graph_add_node(G, 0);
-			sf *a = sf_create();
-			ssf_create(a, 0, 9);
-			sf *b = newDeltaStarReductionAlgorithm(G);
-			dump_sf(a);
-			dump_sf(b);
-			ck_assert_int_eq(0, sf_compare(a, b));
-		}END_TEST
+		}
+		graph_add_node(G, 0);
+		sf *a = sf_create();
+		ssf_create(a, 0, 9);
+		sf *b = newDeltaStarReductionAlgorithm(G);
+		dump_sf(a);
+		dump_sf(b);
+		ck_assert_int_eq(0, sf_compare(a, b));
+	}END_TEST
 
 START_TEST(test_sf_V)
 	{
@@ -441,41 +441,95 @@ START_TEST(test_sf_V)
 
 	}END_TEST
 
-	START_TEST(test_sf_branches)
-		{
-			/* case: a Tree with a lot of branches */
-			Graph *G = new_graph(10);
-			graph_add_node(G, -30);
-			graph_add_node(G, 30);
-			graph_add_node(G, 29);
-			graph_add_node(G, 28);
-			graph_add_node(G, 28);
-			graph_add_node(G, 27);
-			graph_add_node(G, 27);
-			graph_add_node(G, 26);
-			graph_add_node(G, 26);
-			graph_add_node(G, 25);
-			add_new_edge_graph(G, 0, 1);
-			add_new_edge_graph(G, 1, 2);
-			add_new_edge_graph(G, 2, 3);
-			add_new_edge_graph(G, 2, 4);
-			add_new_edge_graph(G, 4, 5);
-			add_new_edge_graph(G, 4, 6);
-			add_new_edge_graph(G, 6, 7);
-			add_new_edge_graph(G, 6, 8);
-			add_new_edge_graph(G, 8, 9);
-			sf *a = sf_create();
-			ssf *ssf = ssf_create(a, -30, 30);
-			ssf_add_ang_pt(ssf, 28, 29);
-			ssf_add_ang_pt(ssf, 27, 28);
-			ssf_add_ang_pt(ssf, 26, 27);
-			ssf_add_ang_pt(ssf, 25, 30);
-			sf *b = newDeltaStarReductionAlgorithm(G);
-			dump_sf(a);
-			dump_sf(b);
-			ck_assert_int_eq(0, sf_compare(a, b));
+START_TEST(test_sf_branches)
+	{
+		/* case: a Tree with a lot of branches */
+		Graph *G = new_graph(10);
+		graph_add_node(G, -30);
+		graph_add_node(G, 30);
+		graph_add_node(G, 29);
+		graph_add_node(G, 28);
+		graph_add_node(G, 28);
+		graph_add_node(G, 27);
+		graph_add_node(G, 27);
+		graph_add_node(G, 26);
+		graph_add_node(G, 26);
+		graph_add_node(G, 25);
+		add_new_edge_graph(G, 0, 1);
+		add_new_edge_graph(G, 1, 2);
+		add_new_edge_graph(G, 2, 3);
+		add_new_edge_graph(G, 2, 4);
+		add_new_edge_graph(G, 4, 5);
+		add_new_edge_graph(G, 4, 6);
+		add_new_edge_graph(G, 6, 7);
+		add_new_edge_graph(G, 6, 8);
+		add_new_edge_graph(G, 8, 9);
+		sf *a = sf_create();
+		ssf *ssf = ssf_create(a, -30, 30);
+		ssf_add_ang_pt(ssf, 28, 29);
+		ssf_add_ang_pt(ssf, 27, 28);
+		ssf_add_ang_pt(ssf, 26, 27);
+		ssf_add_ang_pt(ssf, 25, 30);
+		sf *b = newDeltaStarReductionAlgorithm(G);
+		dump_sf(a);
+		dump_sf(b);
+		ck_assert_int_eq(0, sf_compare(a, b));
 
-		}END_TEST
+	}END_TEST
+
+START_TEST(test_sf_two_dots)
+	{
+		/* case: a Graph with two isolated nodes */
+		Graph *G = new_graph(10);
+		graph_add_node(G, -30);
+		graph_add_node(G, 30);
+		sf *a = sf_create();
+		ssf_create(a, -30, -30);
+		ssf_create(a, 30, 30);
+		sf *b = newDeltaStarReductionAlgorithm(G);
+		dump_sf(a);
+		dump_sf(b);
+		ck_assert_int_eq(0, sf_compare(a, b));
+	}END_TEST
+
+START_TEST(test_sf_multi)
+	{
+		/* case: a Graph with three connected components */
+		Graph *G = new_graph(10);
+		graph_add_node(G, 0.0);
+		graph_add_node(G, 0.0);
+		graph_add_node(G, 0.0);
+		graph_add_node(G, 0.0);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 2.0);
+		graph_add_node(G, 3.0);
+
+		add_new_edge_graph(G, 0, 4);
+		add_new_edge_graph(G, 1, 7);
+		add_new_edge_graph(G, 2, 7);
+		add_new_edge_graph(G, 4, 9);
+		add_new_edge_graph(G, 5, 8);
+		add_new_edge_graph(G, 6, 8);
+		add_new_edge_graph(G, 8, 9);
+
+		sf *a = sf_create();
+		ssf *ssf = ssf_create(a, 0, 3);
+		ssf_add_ang_pt(ssf, 1, 2);
+		ssf_add_ang_pt(ssf, 1, 3);
+
+		ssf = ssf_create(a, 0, 1);
+		ssf_add_ang_pt(ssf, 0, 1);
+
+		ssf_create(a, 0, 0);
+
+		sf *b = newDeltaStarReductionAlgorithm(G);
+		dump_sf(a);
+		dump_sf(b);
+		ck_assert_int_eq(0, sf_compare(a, b));
+	}END_TEST
 
 Suite *sf_suite(void) {
 	Suite * s = suite_create("SizeFunction");
@@ -530,6 +584,12 @@ Suite *sf_suite(void) {
 	TCase * tc_sf_branches = tcase_create("sf branches");
 	tcase_add_test(tc_sf_branches, test_sf_branches);
 	suite_add_tcase(s, tc_sf_branches);
+	TCase * tc_sf_two_dots = tcase_create("sf by two ssf");
+	tcase_add_test(tc_sf_two_dots, test_sf_two_dots);
+	suite_add_tcase(s, tc_sf_two_dots);
+	TCase * tc_sf_multi = tcase_create("sf by three connected components");
+	tcase_add_test(tc_sf_multi, test_sf_multi);
+	suite_add_tcase(s, tc_sf_multi);
 
 
 	return s;
