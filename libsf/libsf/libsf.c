@@ -119,7 +119,7 @@ static void _set_ssf(STNode *node, ssf *ssf){
 		node = node->parent;
 	}
 	if(node && node->mark != ssf){
-		printf("BUG: More ssf on the same connected componed\n");
+		printf("BUG: More ssf on the same connected component\n");
 	}
 }
 
