@@ -23,6 +23,19 @@ class H0Node(SizeNode):
             raise ValueError("Cannot set the parent : the measuring function MUST be greater")
         self._connect(p)
         self._parent = weakref.ref(p)
+    
+    def _add_child(self,c):
+        if self.phy <= c.phy:
+            raise ValueError("Cannot set the children : the measuring function MUST be lower")
+        c.parent = self
+        
+    def add_children(self, *args):
+        for c in args:
+            self._add_child(c)
+    @property
+    def children(self):
+        return set([n for n in self.connected if n != self.parent])
+        
 
 class H0Tree(SizeGraph):
     '''
