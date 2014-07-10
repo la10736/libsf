@@ -17,13 +17,25 @@ class H0Node(SizeNode):
         if self._parent is None:
             return None
         return self._parent()
+    
+    def _set_parent(self, p):
+        self._connect(p)
+        self._parent = weakref.ref(p)
+        
     @parent.setter
     def parent(self, p):
         if self.phy >= p.phy:
             raise ValueError("Cannot set the parent : the measuring function MUST be greater")
-        self._connect(p)
-        self._parent = weakref.ref(p)
-    
+        self._set_parent(p)
+        
+    def connect(self, other):
+        self._check_node(other)
+        if self.phy < other.phy:
+            return self._set_parent(other)
+        elif self.phy > other.phy:
+            return other._set_parent(self)
+        raise ValueError("Cannot coonect two node with the same measuring function value")
+        
     def _add_child(self,c):
         if self.phy <= c.phy:
             raise ValueError("Cannot set the children : the measuring function MUST be lower")

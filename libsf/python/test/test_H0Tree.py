@@ -125,9 +125,24 @@ class Test_H0Node(unittest.TestCase):
         n.add_children(h.add_node(-2.0),h.add_node(-2.0),h.add_node(-3.0),h.add_node(-1.5),h.add_node(-1.0))
         for nn in n.children:
             self.assertIs(nn.parent, n)
-        
-        
-        
+    
+    def _connect(self,n,m):
+        n.connect(m)
+    
+    def test_connect(self):
+        h = H()
+        n = h.add_node()
+        """Cannot connect equal nodes"""
+        self.assertRaises(ValueError, self._connect, n, h.add_node())
+        """n<m => m a child of n and n a parent of m"""
+        m = h.add_node(1.0)
+        n.connect(m)
+        self.assertIn(n, m.children)
+        self.assertIs(m, n.parent)
+        m = h.add_node(-1.0)
+        n.connect(m)
+        self.assertIn(m, n.children)
+        self.assertIs(n, m.parent)
         
         
 
