@@ -4,6 +4,7 @@ Created on 06/lug/2014
 @author: michele
 '''
 from SizeGraph import SizeGraph, SizeNode
+from SizeFunction import SizeFunction
 import weakref
 
 class H0Node(SizeNode):
@@ -47,7 +48,30 @@ class H0Node(SizeNode):
     @property
     def children(self):
         return set([n for n in self.connected if n != self.parent])
-        
+    
+    @property
+    def is_leaf(self):
+        return not self.children
+    
+    @property
+    def leafs(self):
+        els = [self]
+        ret = []
+        while els:
+            ret += [e for e in els if e.is_leaf]
+            n = []
+            for e in els:
+                if not e.is_leaf:
+                    n += e.children
+            els = n
+        return ret
+    
+    @property
+    def root(self):
+        r = self
+        while r.parent:
+            r = r.parent
+        return r
 
 class H0Tree(SizeGraph):
     '''
@@ -61,4 +85,37 @@ class H0Tree(SizeGraph):
         Constructor
         '''
         super(H0Tree,self).__init__(nodes_factory=H0Node)
-        
+    
+    @property
+    def leafs(self):
+        return [l for l in self.nodes if l.is_leaf]
+    
+    def get_sf(self):
+        leafs = sorted(self.leafs, key=lambda n:n.phy, reverse=True)
+        sf = SizeFunction()
+        map_ssf={}
+        for l in leafs:
+            n = l
+            ssf = map_ssf.get(n, None)
+            while ssf is None and n is not None:
+                n = n.parent
+                ssf = map_ssf.get(n, None)
+            if n is None:
+                r = l.root
+                cl = min(map(lambda n:n.phy, r.leafs))
+                ssf = sf.new_ssf(cl,r.phy)
+            n = l
+            while n is not None and not map_ssf.has_key(n):
+                map_ssf[n] = ssf
+                n = n.parent
+            if n is not None and map_ssf[n] != ssf:
+                raise RuntimeError("BUG: More than ssf on the same connected component")
+            n = l.parent
+            while n is not None:
+                if any(map(lambda c:not map_ssf.has_key(c),n.children)):
+                    """Found the end point of corner point"""
+                    break
+                n = n.parent
+            if n is not None:
+                ssf.add_point(l.phy,n.phy)
+        return sf

@@ -6,6 +6,8 @@ Created on 06/lug/2014
 import unittest
 from sf.H0Tree import H0Tree as H
 from sf.H0Tree import H0Node as N
+from sf.SizeFunction import SizeFunction as SF
+
 
 class Test_H0Tree(unittest.TestCase):
     """Test cases for H0Tree class.
@@ -143,7 +145,135 @@ class Test_H0Node(unittest.TestCase):
         n.connect(m)
         self.assertIn(m, n.children)
         self.assertIs(n, m.parent)
+    
+    def test_is_leaf(self):
+        h = H()
+        n = h.add_node()
+        self.assertTrue(n.is_leaf)
+        n.parent = h.add_node(1.0)
+        self.assertTrue(n.is_leaf)
+        self.assertFalse(n.parent.is_leaf)
+        h.add_node(-1.0).parent = n
+        self.assertFalse(n.is_leaf)
+        self.assertTrue(n.children.pop().is_leaf)
+
+    def test_leafs(self):
+        h = H()
+        n = h.add_node()
+        self.assertEqual(1, len(n.leafs))
+        self.assertIn(n, n.leafs)
+        nn = [h.add_node(-1.0) for _ in xrange(3)]
+        for nnn in nn:
+            nnn.parent=n
+        leafs = n.leafs
+        self.assertEqual(len(nn), len(leafs))
+        for nnn in nn:
+            self.assertIn(nnn, leafs)
+            h.add_node(-2.0).parent = nnn
+            h.add_node(-2.0).parent = nnn
+        leafs = n.leafs
+        self.assertEqual(2*len(nn), len(leafs))
+        for nnn in leafs:
+            self.assertIs(n, nnn.parent.parent)
+        h.add_node(-2.0).parent = n
+        self.assertEqual(2*len(nn)+1, len(n.leafs))
         
+    def test_root(self):
+        h = H()
+        n = h.add_node()
+        self.assertIs(n,n.root)
+        m = h.add_node(1.0)
+        self.assertIs(m,m.root)
+        n.parent = m
+        self.assertIs(m,n.root)
+        self.assertIs(m,m.root)
+        nn = h.add_node(-1.0)
+        nn.parent = n
+        self.assertIs(m,nn.root)
+        nn = h.add_node(-1.0)
+        nn.parent = n
+        self.assertIs(m,nn.root)
+        
+        
+        
+        
+class Test_X_H0Tree_More(unittest.TestCase):
+    
+    def test_leafs(self):
+        h = H()
+        self.assertEqual(0, len(h.leafs))
+        n = h.add_node()
+        self.assertEqual(1, len(h.leafs))
+        self.assertIn(n, h.leafs)
+        nn = [h.add_node(-1.0) for _ in xrange(3)]
+        for nnn in nn:
+            nnn.parent=n
+        leafs = h.leafs
+        self.assertEqual(len(nn), len(leafs))
+        for nnn in nn:
+            self.assertIn(nnn, leafs)
+            h.add_node(-2.0).parent = nnn
+            h.add_node(-2.0).parent = nnn
+        leafs = h.leafs
+        self.assertEqual(2*len(nn), len(leafs))
+        for nnn in leafs:
+            self.assertIs(n, nnn.parent.parent)
+        h.add_node(-2.0).parent = n
+        self.assertEqual(2*len(nn)+1, len(h.leafs))
+        
+class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
+        
+        def test_void(self):
+            h = H()
+            self.assertEqual(h.get_sf(), SF())
+            
+        def test_dot(self):
+            h = H()
+            h.add_node()
+            sf=h.get_sf()
+            o_sf=SF()
+            o_sf.new_ssf(0.0,0.0)
+            self.assertEqual(sf, o_sf)
+
+        def test_dots(self):
+            h = H()
+            h.add_node()
+            h.add_node(-1)
+            h.add_node(1)
+            h.add_node(1)
+            h.add_node(1)
+            sf=h.get_sf()
+            o_sf=SF()
+            o_sf.new_ssf(0.0,0.0)
+            o_sf.new_ssf(-1.0,-1.0)
+            o_sf.new_ssf(1.0,1.0)
+            o_sf.new_ssf(1.0,1.0)
+            o_sf.new_ssf(1.0,1.0)
+            self.assertEqual(sf, o_sf)
+        
+        def test_ReverseV(self):
+            h = H()
+            n=h.add_node()
+            h.add_node(-1).parent = n
+            h.add_node(-2).parent = n
+            sf=h.get_sf()
+            o_sf=SF()
+            o_sf.new_ssf(-2,0.0).add_point(-1,0)
+            self.assertEqual(sf, o_sf)
+            h = H()
+            n=h.add_node()
+            m = h.add_node(-0.5)
+            m.parent = n
+            h.add_node(-1).parent = m
+            m = h.add_node(-1)
+            m.parent = n
+            h.add_node(-2).parent = m
+            m = h.add_node(1)
+            n.parent = m
+            sf=h.get_sf()
+            o_sf=SF()
+            o_sf.new_ssf(-2,1.0).add_point(-1,0)
+            self.assertEqual(sf, o_sf)
         
 
 if __name__ == "__main__":
