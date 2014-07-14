@@ -492,6 +492,42 @@ START_TEST(test_sf_two_dots)
 		ck_assert_int_eq(0, sf_compare(a, b));
 	}END_TEST
 
+START_TEST(test_sf_complex){
+		/* case: a Graph with a "complex" situation */
+		Graph *G = new_graph(9);
+		graph_add_node(G, 0.0);
+		graph_add_node(G, 0.2);
+		graph_add_node(G, 0.1);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 1.0);
+		graph_add_node(G, 2.0);
+		graph_add_node(G, 2.0);
+		graph_add_node(G, 3.0);
+		graph_add_node(G, 4.0);
+
+		add_new_edge_graph(G, 0, 5);
+		add_new_edge_graph(G, 1, 5);
+		add_new_edge_graph(G, 5, 7);
+		add_new_edge_graph(G, 7, 8);
+		add_new_edge_graph(G, 2, 7);
+		add_new_edge_graph(G, 3, 6);
+		add_new_edge_graph(G, 4, 6);
+		add_new_edge_graph(G, 6, 8);
+
+		sf *a = sf_create();
+		ssf *ssf = ssf_create(a, 0, 4);
+		ssf_add_ang_pt(ssf, 1, 2);
+		ssf_add_ang_pt(ssf, 1, 4);
+		ssf_add_ang_pt(ssf, 0.1, 3);
+		ssf_add_ang_pt(ssf, 0.2, 2);
+
+		sf *b = newDeltaStarReductionAlgorithm(G);
+		dump_sf(a);
+		dump_sf(b);
+		ck_assert_int_eq(0, sf_compare(a, b));
+
+}END_TEST
+
 START_TEST(test_sf_multi)
 	{
 		/* case: a Graph with three connected components */
@@ -587,6 +623,9 @@ Suite *sf_suite(void) {
 	TCase * tc_sf_two_dots = tcase_create("sf by two ssf");
 	tcase_add_test(tc_sf_two_dots, test_sf_two_dots);
 	suite_add_tcase(s, tc_sf_two_dots);
+	TCase * tc_sf_complex = tcase_create("sf complex");
+	tcase_add_test(tc_sf_complex, test_sf_complex);
+	suite_add_tcase(s, tc_sf_complex);
 	TCase * tc_sf_multi = tcase_create("sf by three connected components");
 	tcase_add_test(tc_sf_multi, test_sf_multi);
 	suite_add_tcase(s, tc_sf_multi);

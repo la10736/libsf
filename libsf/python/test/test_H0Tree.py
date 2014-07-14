@@ -7,6 +7,7 @@ import unittest
 from sf.H0Tree import H0Tree as H
 from sf.H0Tree import H0Node as N
 from sf.SizeFunction import SizeFunction as SF
+import sys
 
 
 class Test_H0Tree(unittest.TestCase):
@@ -193,6 +194,17 @@ class Test_H0Node(unittest.TestCase):
         nn = h.add_node(-1.0)
         nn.parent = n
         self.assertIs(m,nn.root)
+    
+    def test__contex(self):
+        """Try to set and get node _contex"""
+        h = H()
+        n = h.add_node()
+        self.assertIsNone(n._context)
+        n._context = "paperino"
+        self.assertEqual("paperino",n._context)
+        n._context = None
+        self.assertIsNone(n._context)
+        
         
         
         
@@ -220,13 +232,37 @@ class Test_X_H0Tree_More(unittest.TestCase):
             self.assertIs(n, nnn.parent.parent)
         h.add_node(-2.0).parent = n
         self.assertEqual(2*len(nn)+1, len(h.leafs))
+    
+    def test_clean_contex(self):
+        h = H()
+        for x in xrange(20):
+            h.add_node()._context = x
+        h.clean_context()
+        for n in h.nodes:
+            self.assertIsNone(n._context)
         
+        
+        
+def _add_node(h,phy=0, children=None, parent=None):
+    m = h.add_node(phy)
+    if children is not None:
+        try:
+            m.add_children(children)
+        except TypeError:
+            m.add_children([children])
+    if parent is not None:
+        m.parent = parent
+    return m
+
+def _add_nodes(h, *args):
+    return [_add_node(h, *a) for a in args]
+
 class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
         
         def test_void(self):
             h = H()
             self.assertEqual(h.get_sf(), SF())
-            
+        
         def test_dot(self):
             h = H()
             h.add_node()
@@ -273,8 +309,87 @@ class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
             sf=h.get_sf()
             o_sf=SF()
             o_sf.new_ssf(-2,1.0).add_point(-1,0)
+            print "#######################"
+            sf.dump(sys.stdout)
+            print "#######################"
+            o_sf.dump(sys.stdout)
             self.assertEqual(sf, o_sf)
         
+        def test_I(self):
+            h = H()
+            nn = _add_nodes(h,(0,),(1,),(2,),(3,),(4,),(5,))
+            for i in xrange(len(nn)-1):
+                nn[i].parent = nn[i+1]
+            o_sf=SF()
+            o_sf.new_ssf(0,5)
+            self.assertEqual(h.get_sf(), o_sf)
+        
+        def test_complex_case(self):
+            '''Complex'''
+            h = H()
+            nn = _add_nodes(h,(0,),(0.2,),(0.1,),(1,),(1,),
+                            (2,),(2,),(3,),(4,))
+            nn[0].parent = nn[5]
+            nn[1].parent = nn[5]
+            nn[5].parent = nn[7]
+            nn[7].parent = nn[8]
+            nn[2].parent = nn[7]
+            nn[3].parent = nn[6]
+            nn[4].parent = nn[6]
+            nn[6].parent = nn[8]
+            o_sf=SF()
+            ssf = o_sf.new_ssf(0,4)
+            ssf.add_point(1,2)
+            ssf.add_point(1,4)
+            ssf.add_point(0.1,3)
+            ssf.add_point(0.2,2)
+            sf = h.get_sf()
+            print "#######################"
+            sf.dump(sys.stdout)
+            print "#######################"
+            o_sf.dump(sys.stdout)
+            self.assertEqual(sf, o_sf)
+
+        def test_Multi(self):
+            h = H()
+            '''dot'''
+            h.add_node()
+            '''Reverse V'''
+            nn = _add_nodes(h,(1,),(2,),(3,))
+            nn[0].parent = nn[2]
+            nn[1].parent = nn[2]
+            '''I'''
+            nn = _add_nodes(h,(0,),(1,),(2,),(3,),(4,),(5,))
+            for i in xrange(len(nn)-1):
+                nn[i].parent = nn[i+1]
+            '''Complex'''
+            nn = _add_nodes(h,(0,),(0.2,),(0.1,),(1,),(1,),
+                            (2,),(2,),(3,),(4,))
+            nn[0].parent = nn[5]
+            nn[1].parent = nn[5]
+            nn[5].parent = nn[7]
+            nn[7].parent = nn[8]
+            nn[2].parent = nn[7]
+            nn[3].parent = nn[6]
+            nn[4].parent = nn[6]
+            nn[6].parent = nn[8]
+            o_sf=SF()
+            o_sf.new_ssf(0,0)
+            o_sf.new_ssf(0,5)
+            ssf = o_sf.new_ssf(1,3)
+            ssf.add_point(2,3)
+            ssf = o_sf.new_ssf(0,4)
+            ssf.add_point(1,2)
+            ssf.add_point(1,4)
+            ssf.add_point(0.1,3)
+            ssf.add_point(0.2,2)
+            sf = h.get_sf()
+            print "#######################"
+            sf.dump(sys.stdout)
+            print "#######################"
+            o_sf.dump(sys.stdout)
+            self.assertEqual(sf, o_sf)
+            
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

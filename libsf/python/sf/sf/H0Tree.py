@@ -11,6 +11,8 @@ class H0Node(SizeNode):
     
     def __init__(self, *args, **kwargs):
         self._parent = None
+        self._context = None
+        self.__leafs = None
         super(H0Node,self).__init__(*args, **kwargs)
     
     @property
@@ -19,9 +21,16 @@ class H0Node(SizeNode):
             return None
         return self._parent()
     
+    def _invalidate_leafs(self):
+        p = self
+        while p:
+            p.__leafs = None
+            p = p.parent
+    
     def _set_parent(self, p):
         self._connect(p)
         self._parent = weakref.ref(p)
+        p._invalidate_leafs()
         
     @parent.setter
     def parent(self, p):
@@ -55,15 +64,16 @@ class H0Node(SizeNode):
     
     @property
     def leafs(self):
-        els = [self]
-        ret = []
-        while els:
-            ret += [e for e in els if e.is_leaf]
-            n = []
-            for e in els:
+        if self.__leafs is not None:
+            return self.__leafs
+        elif self.is_leaf:
+            ret = [self]
+        else:
+            ret = [e for e in self.children if e.is_leaf]
+            for e in self.children:
                 if not e.is_leaf:
-                    n += e.children
-            els = n
+                    ret += e.leafs
+        self.__leafs = ret
         return ret
     
     @property
@@ -90,32 +100,42 @@ class H0Tree(SizeGraph):
     def leafs(self):
         return [l for l in self.nodes if l.is_leaf]
     
+    def clean_context(self):
+        for n in self.nodes:
+            n._context = None
+    
+    def _init_context(self):
+        for n in self.nodes:
+            n._context = [len(n.children),None]
+    
     def get_sf(self):
         leafs = sorted(self.leafs, key=lambda n:n.phy, reverse=True)
+        self._init_context()
         sf = SizeFunction()
-        map_ssf={}
         for l in leafs:
             n = l
-            ssf = map_ssf.get(n, None)
-            while ssf is None and n is not None:
+            ssf = n._context[1]
+            while n is not None and n._context[1] is None:
                 n = n.parent
-                ssf = map_ssf.get(n, None)
             if n is None:
                 r = l.root
                 cl = min(map(lambda n:n.phy, r.leafs))
                 ssf = sf.new_ssf(cl,r.phy)
+            else:
+                ssf = n._context[1]
             n = l
-            while n is not None and not map_ssf.has_key(n):
-                map_ssf[n] = ssf
+            while n is not None and n._context[1] is None:
+                n._context[1] = ssf
                 n = n.parent
-            if n is not None and map_ssf[n] != ssf:
+            if n is not None and n._context[1] != ssf:
                 raise RuntimeError("BUG: More than ssf on the same connected component")
             n = l.parent
             while n is not None:
-                if any(map(lambda c:not map_ssf.has_key(c),n.children)):
+                if n._context[0] > 1:
                     """Found the end point of corner point"""
                     break
                 n = n.parent
             if n is not None:
+                n._context[0] -= 1
                 ssf.add_point(l.phy,n.phy)
         return sf

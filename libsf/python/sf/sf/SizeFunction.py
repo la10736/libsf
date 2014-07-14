@@ -214,6 +214,17 @@ class _AbstractSizeFunction(object):
         for ssf in self._ssfs:
             ret.add(ssf)
         return ret
+    
+    def dump(self, f):
+        for ssf in self.ssfs:
+            f.write("l %f"%ssf.cornerline)
+            if isinstance(ssf, SimpleSizeFunction):
+                f.write(" %f"%ssf.maximum)
+            f.write("\n")
+            for p in ssf.points:
+                f.write("p %f %f\n"%(p.x,p.y))
+            
+            
 
 class SizeFunctionOld(_AbstractSizeFunction):
     """The size function object old legacy implementation.
