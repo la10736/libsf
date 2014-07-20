@@ -4,7 +4,7 @@ Created on 06/lug/2014
 @author: michele
 '''
 import unittest
-from sf.H0Tree import H0Tree as H
+from sf.H0Tree import H0Tree as H, H0Node
 from sf.H0Tree import H0Node as N
 from sf.SizeFunction import SizeFunction as SF
 import sys
@@ -204,6 +204,85 @@ class Test_H0Node(unittest.TestCase):
         self.assertEqual("paperino",n._context)
         n._context = None
         self.assertIsNone(n._context)
+        
+    def test_get_min(self):
+        """Should return self if the node is a leaf
+        or has more than one child; otherwise
+        return the first child that is a leaf or has
+        more than one child"""
+        h = H()
+        n = h.add_node()
+        self.assertIs(n, n.get_min())
+        m = h.add_node(-1)
+        m.parent = n
+        self.assertIs(m, n.get_min())
+        self.assertIs(m, m.get_min())
+        o = h.add_node(-1)
+        o.parent = n
+        self.assertIs(n, n.get_min())
+        self.assertIs(m, m.get_min())
+        self.assertIs(o, o.get_min())
+        p = h.add_node(1)
+        n.parent = p
+        self.assertIs(n, n.get_min())
+        self.assertIs(n, p.get_min())
+        self.assertIs(m, m.get_min())
+        self.assertIs(o, o.get_min())
+        g = h.add_node(-2)
+        g.parent = m
+        self.assertIs(n, n.get_min())
+        self.assertIs(n, p.get_min())
+        self.assertIs(g, m.get_min())
+        self.assertIs(g, g.get_min())
+        self.assertIs(o, o.get_min())
+    
+    def test_equal_subtree(self):
+        h = H()
+        n0 = h.add_node()
+        n1 = h.add_node()
+        self.assertTrue(n0.equal_subtree(n1))
+        m = h.add_node(-1)
+        self.assertFalse(n0.equal_subtree(m))
+        self.assertFalse(n1.equal_subtree(m))
+        m.parent = n0
+        self.assertFalse(n0.equal_subtree(n1))
+        m1 = h.add_node(-1)
+        m1.parent = n1
+        self.assertTrue(n0.equal_subtree(n1))
+        qq = [h.add_node(-1) for _ in xrange(3)]
+        for q in qq:
+            q.parent = n0
+        self.assertFalse(n0.equal_subtree(n1))
+        qq = [h.add_node(-1) for _ in xrange(3)]
+        for q in qq:
+            q.parent = n1
+        self.assertTrue(n0.equal_subtree(n1))
+        for c in n0.children:
+            s=c
+            for i in xrange(4):
+                v = h.add_node(c.phy-1-i)
+                v.parent = s
+                s = v
+            for v in [h.add_node(s.phy-1)]:
+                v.parent = s
+        self.assertFalse(n0.equal_subtree(n1))
+        for c in n1.children:
+            s=c
+            for i in xrange(8):
+                v = h.add_node(c.phy-0.5-(i/2.0))
+                v.parent = s
+                s = v
+            for v in [h.add_node(s.phy-1)]:
+                v.parent = s
+        self.assertTrue(n0.equal_subtree(n1))
+        
+    def test_equal_subtree_raise(self):
+        """Test if the function raise the true exception"""
+        h = H()
+        n = h.add_node()
+        self.assertRaises(ValueError, n.equal_subtree, None)
+        self.assertRaises(ValueError, n.equal_subtree, "pippo")
+        self.assertRaises(ValueError, n.equal_subtree, 12)
         
         
         

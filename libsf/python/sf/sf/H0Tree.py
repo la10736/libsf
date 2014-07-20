@@ -82,6 +82,46 @@ class H0Node(SizeNode):
         while r.parent:
             r = r.parent
         return r
+    
+    def get_min(self):
+        """Should return self if the node is a leaf
+        or has more than one child; otherwise
+        return the first child that is a leaf or has
+        more than one child"""
+        _cc = self.children
+        if not _cc or len(_cc)>1:
+            return self
+        return _cc.pop().get_min()
+    
+    def equal_subtree(self, other):
+        """Return true if the sub tree with self as root is equal
+        to the sub tree with the root in other
+        @param other: The other H0Node used as root for the other tree
+        @raise ValueError: if other is not an instance of H0Node
+        """
+        if not isinstance(other, H0Node):
+            raise ValueError("other must be a H0Node")
+        if self.phy != other.phy:
+            return False
+        sm,om = self.get_min(),other.get_min()
+        if sm.phy != om.phy:
+            return False
+        scc,occ = sm.children,om.children
+        if len(scc) != len(occ):
+            return False
+        for sc in scc:
+            f = None
+            for oc in occ:
+                if sc.equal_subtree(oc):
+                    f = oc
+                    break
+            if f is None:
+                return False
+            occ.remove(f)
+        return True
+            
+        
+
 
 class H0Tree(SizeGraph):
     '''
