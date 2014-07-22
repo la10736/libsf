@@ -103,16 +103,13 @@ class H0Node(SizeNode):
             raise ValueError("other must be a H0Node")
         if self.phy != other.phy:
             return False
-        sm,om = self.get_min(),other.get_min()
-        if sm.phy != om.phy:
-            return False
-        scc,occ = sm.children,om.children
+        scc,occ = self.children,other.children
         if len(scc) != len(occ):
             return False
         for sc in scc:
             f = None
             for oc in occ:
-                if sc.equal_subtree(oc):
+                if sc.get_min().equal_subtree(oc.get_min()):
                     f = oc
                     break
             if f is None:
@@ -179,3 +176,22 @@ class H0Tree(SizeGraph):
                 n._context[0] -= 1
                 ssf.add_point(l.phy,n.phy)
         return sf
+        
+    def same(self, other):
+        if other is None or not isinstance(other, H0Tree):
+            raise ValueError("You can compare H0Tree only")
+        sroots = set([n for n in self.nodes if n.parent is None])
+        oroots = set([n for n in other.nodes if n.parent is None])
+        if len(sroots) != len(oroots):
+            return False
+        for rs in sroots:
+            found = None
+            for ro in oroots:
+                if rs.equal_subtree(ro):
+                    found = ro
+                    break
+            if found is not None:
+                oroots.remove(ro)
+            else:
+                return False
+        return True

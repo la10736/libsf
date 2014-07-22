@@ -275,7 +275,44 @@ class Test_H0Node(unittest.TestCase):
             for v in [h.add_node(s.phy-1)]:
                 v.parent = s
         self.assertTrue(n0.equal_subtree(n1))
-        
+
+    def test_equal_subtree_3_trunc(self):
+        h0 = H()
+        h1 = H()
+        n0 = h0.add_node()
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n1 = h1.add_node()
+        self.assertTrue(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n00 = h0.add_node(-2)
+        n01 = h0.add_node(-2)
+        n02 = h0.add_node(-1.5)
+        n00.parent = n01.parent = n02.parent = n0
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n10 = h1.add_node(-2)
+        n11 = h1.add_node(-2)
+        n12 = h1.add_node(-1.5)
+        n10.parent = h1.add_node(-1)
+        n11.parent = h1.add_node(-0.8)
+        n12.parent = h1.add_node(-1.0)
+        n10.parent.parent = n11.parent.parent = n12.parent.parent = n1 
+        self.assertTrue(n0.equal_subtree(n1))
+        i = 2
+        for d in [n00,n01,n02,n10,n11,n12]:
+            a = d.sg.add_node(-100.0)
+            aa = d.sg.add_node(-100.0/i)
+            i += 1
+            b = d.sg.add_node(-100.0)
+            bb = d.sg.add_node(-100.0/i)
+            i += 1
+            a.parent = aa 
+            b.parent = bb 
+            aa.parent = bb.parent = d
+            
+        self.assertTrue(n0.equal_subtree(n1))
+
     def test_equal_subtree_raise(self):
         """Test if the function raise the true exception"""
         h = H()
@@ -468,7 +505,54 @@ class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
             print "#######################"
             o_sf.dump(sys.stdout)
             self.assertEqual(sf, o_sf)
-            
+        
+        def test_same_components(self):
+            h0 = H()
+            h1 = H()
+            self.assertTrue(h0.same(h1))
+            self.assertRaises(ValueError, h0.same, None)
+            self.assertRaises(ValueError, h0.same, "pippo")
+            self.assertRaises(ValueError, h0.same, 2)
+            n0 = h0.add_node()
+            self.assertFalse(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n1 = h1.add_node()
+            self.assertTrue(h0.same(h1))
+            n0.parent = h0.add_node(1)
+            n0.parent.parent = h0.add_node(2)
+            self.assertFalse(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n1.parent = h1.add_node(2)
+            self.assertTrue(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n0 = h0.add_node()
+            self.assertFalse(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n1 = h1.add_node()
+            self.assertTrue(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n0 = h0.add_node()
+            self.assertFalse(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n1 = h1.add_node()
+            self.assertTrue(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n00 = h0.add_node(-2)
+            n01 = h0.add_node(-2)
+            n02 = h0.add_node(-1.5)
+            n00.parent = n01.parent = n02.parent = n0
+            self.assertFalse(h0.same(h1))
+            self.assertTrue(h0.same(h0))
+            n10 = h1.add_node(-2)
+            n11 = h1.add_node(-2)
+            n12 = h1.add_node(-1.5)
+            n10.parent = h1.add_node(-1)
+            n11.parent = h1.add_node(-0.8)
+            n12.parent = h1.add_node(-1.0)
+            n10.parent.parent = n11.parent.parent = n12.parent.parent = n1 
+            self.assertTrue(h0.same(h0))
+            self.assertTrue(h0.same(h1))
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
