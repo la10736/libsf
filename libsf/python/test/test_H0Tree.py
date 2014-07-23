@@ -4,8 +4,10 @@ Created on 06/lug/2014
 @author: michele
 '''
 import unittest
-from sf.H0Tree import H0Tree as H, H0Node
+from sf.H0Tree import H0Tree as H
 from sf.H0Tree import H0Node as N
+from sf.H0Tree import compute_H0Tree
+from sf.SizeGraph import SizeGraph as G
 from sf.SizeFunction import SizeFunction as SF
 import sys
 
@@ -551,6 +553,27 @@ class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
             print "#######################"
             o_sf.dump(sys.stdout)
             self.assertEqual(sf, o_sf)
+        
+class Test_XXX_H0Tree_compute_H0Tree(unittest.TestCase):
+    """We are testing the computing of the H0Tree that represent
+    a SizeGraph.
+    """
+    
+    def test_base(self):
+        self.assertIsNone(compute_H0Tree(None))
+        self.assertRaises(ValueError,compute_H0Tree, "pippo")
+        self.assertRaises(ValueError,compute_H0Tree, 1)
+        self.assertRaises(ValueError,compute_H0Tree, [])
+        self.assertRaises(ValueError,compute_H0Tree, {})
+        self.assertIsNotNone(compute_H0Tree(G()))
+    
+    def test_base_graph(self):
+        g=G()
+        h=H()
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        g.add_node()
+        h.add_node()
+        self.assertTrue(h.same(compute_H0Tree(g)))
         
 
 if __name__ == "__main__":

@@ -195,3 +195,15 @@ class H0Tree(SizeGraph):
             else:
                 return False
         return True
+
+def compute_H0Tree(g):
+    """Compute the H0Tree from the SizeGraph G. 
+    @param g: a SizeGraph
+    @return the H0Tree of the size graph
+    @raise ValueError if g is not a SizeGraph
+    """
+    if g is None:
+        return None
+    if not isinstance(g, SizeGraph):
+        raise ValueError("g Should be a SizeGraph")
+    return H0Tree()
