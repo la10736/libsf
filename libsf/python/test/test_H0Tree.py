@@ -557,6 +557,13 @@ class Test_XXX_H0Tree_compute_H0Tree(unittest.TestCase):
         h.add_node()
         self.assertTrue(h.same(compute_H0Tree(g)))
         
+    def test_H0Tree_graph(self):
+        g=H()
+        h=H()
+        for x in [g,h]:
+            x.add_node(-1).parent = x.add_node(-1.2).parent = x.add_node(0)
+        self.assertTrue(h.same(compute_H0Tree(g)))
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

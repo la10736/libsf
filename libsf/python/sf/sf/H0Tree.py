@@ -7,6 +7,7 @@ from SizeGraph import SizeGraph, SizeNode
 from SizeFunction import SizeFunction
 import weakref
 from UnionFind import Set
+from operator import attrgetter
 
 class H0Node(SizeNode):
     
@@ -202,16 +203,29 @@ def compute_H0Tree(g):
         return None
     if not isinstance(g, SizeGraph):
         raise ValueError("g Should be a SizeGraph")
-    """First of all create a set() for each node"""
-    for n in g.nodes:
-        n._context = Set()
     h = H0Tree()
-    
-    
-    """If there are some isolate nodes they must be represented
-    by isolate node in the H0Tree. Check if some set() associate to 
-    node have no contex (aka H0Tree node)"""
-    for n in g.nodes:
-        if n._context.contex is None:
-            h.add_node(n.phy)
+    """For each nodes (sorted by phy)"""
+    for n in sorted(g.nodes,key=attrgetter('phy')):
+        """Use contex to store unioin-find set"""
+        sn = n._context = Set()
+        """The node of h associate to the set of n... it is None"""
+        hn = None
+        """Connetions to "lower" node: aka the nodes already computed"""
+        nodes = [m for m in n._connected if m._context is not None]
+        for m in nodes:
+            sm = m._context
+            """The node of h associate to the set of m"""
+            hm = sm.contex
+            if n.phy == m.phy :
+                sm.union(sn)
+                hn = hm
+            elif hn != hm:
+                if hn is None:
+                    """I need to create a new node""" 
+                    hn = sn.contex = h.add_node(n.phy)
+                """hm is the parent of hm"""
+                hm.parent = hn
+        if hn is None:
+            """Create a new node for the leafs""" 
+            sn.contex = h.add_node(n.phy)
     return h
