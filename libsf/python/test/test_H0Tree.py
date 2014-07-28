@@ -197,16 +197,6 @@ class Test_H0Node(unittest.TestCase):
         nn.parent = n
         self.assertIs(m,nn.root)
     
-    def test__contex(self):
-        """Try to set and get node _contex"""
-        h = H()
-        n = h.add_node()
-        self.assertIsNone(n._context)
-        n._context = "paperino"
-        self.assertEqual("paperino",n._context)
-        n._context = None
-        self.assertIsNone(n._context)
-        
     def test_get_min(self):
         """Should return self if the node is a leaf
         or has more than one child; otherwise
@@ -351,60 +341,52 @@ class Test_X_H0Tree_More(unittest.TestCase):
         h.add_node(-2.0).parent = n
         self.assertEqual(2*len(nn)+1, len(h.leafs))
     
-    def test_clean_contex(self):
-        h = H()
-        for x in xrange(20):
-            h.add_node()._context = x
-        h.clean_context()
-        for n in h.nodes:
-            self.assertIsNone(n._context)
-        
-        def test_same_components(self):
-            h0 = H()
-            h1 = H()
-            self.assertTrue(h0.same(h1))
-            self.assertRaises(ValueError, h0.same, None)
-            self.assertRaises(ValueError, h0.same, "pippo")
-            self.assertRaises(ValueError, h0.same, 2)
-            n0 = h0.add_node()
-            self.assertFalse(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n1 = h1.add_node()
-            self.assertTrue(h0.same(h1))
-            n0.parent = h0.add_node(1)
-            n0.parent.parent = h0.add_node(2)
-            self.assertFalse(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n1.parent = h1.add_node(2)
-            self.assertTrue(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n0 = h0.add_node()
-            self.assertFalse(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n1 = h1.add_node()
-            self.assertTrue(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n0 = h0.add_node()
-            self.assertFalse(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n1 = h1.add_node()
-            self.assertTrue(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n00 = h0.add_node(-2)
-            n01 = h0.add_node(-2)
-            n02 = h0.add_node(-1.5)
-            n00.parent = n01.parent = n02.parent = n0
-            self.assertFalse(h0.same(h1))
-            self.assertTrue(h0.same(h0))
-            n10 = h1.add_node(-2)
-            n11 = h1.add_node(-2)
-            n12 = h1.add_node(-1.5)
-            n10.parent = h1.add_node(-1)
-            n11.parent = h1.add_node(-0.8)
-            n12.parent = h1.add_node(-1.0)
-            n10.parent.parent = n11.parent.parent = n12.parent.parent = n1 
-            self.assertTrue(h0.same(h0))
-            self.assertTrue(h0.same(h1))
+    def test_same_components(self):
+        h0 = H()
+        h1 = H()
+        self.assertTrue(h0.same(h1))
+        self.assertRaises(ValueError, h0.same, None)
+        self.assertRaises(ValueError, h0.same, "pippo")
+        self.assertRaises(ValueError, h0.same, 2)
+        n0 = h0.add_node()
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n1 = h1.add_node()
+        self.assertTrue(h0.same(h1))
+        n0.parent = h0.add_node(1)
+        n0.parent.parent = h0.add_node(2)
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n1.parent = h1.add_node(2)
+        self.assertTrue(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n0 = h0.add_node()
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n1 = h1.add_node()
+        self.assertTrue(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n0 = h0.add_node()
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n1 = h1.add_node()
+        self.assertTrue(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n00 = h0.add_node(-2)
+        n01 = h0.add_node(-2)
+        n02 = h0.add_node(-1.5)
+        n00.parent = n01.parent = n02.parent = n0
+        self.assertFalse(h0.same(h1))
+        self.assertTrue(h0.same(h0))
+        n10 = h1.add_node(-2)
+        n11 = h1.add_node(-2)
+        n12 = h1.add_node(-1.5)
+        n10.parent = h1.add_node(-1)
+        n11.parent = h1.add_node(-0.8)
+        n12.parent = h1.add_node(-1.0)
+        n10.parent.parent = n11.parent.parent = n12.parent.parent = n1 
+        self.assertTrue(h0.same(h0))
+        self.assertTrue(h0.same(h1))
         
         
 def _add_node(h,phy=0, children=None, parent=None):

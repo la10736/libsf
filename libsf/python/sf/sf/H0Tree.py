@@ -6,12 +6,12 @@ Created on 06/lug/2014
 from SizeGraph import SizeGraph, SizeNode
 from SizeFunction import SizeFunction
 import weakref
+from UnionFind import Set
 
 class H0Node(SizeNode):
     
     def __init__(self, *args, **kwargs):
         self._parent = None
-        self._context = None
         self.__leafs = None
         super(H0Node,self).__init__(*args, **kwargs)
     
@@ -137,10 +137,6 @@ class H0Tree(SizeGraph):
     def leafs(self):
         return [l for l in self.nodes if l.is_leaf]
     
-    def clean_context(self):
-        for n in self.nodes:
-            n._context = None
-    
     def _init_context(self):
         for n in self.nodes:
             n._context = [len(n.children),None]
@@ -165,7 +161,7 @@ class H0Tree(SizeGraph):
                 n._context[1] = ssf
                 n = n.parent
             if n is not None and n._context[1] != ssf:
-                raise RuntimeError("BUG: More than ssf on the same connected component")
+                raise RuntimeError("BUG: More than one ssf on the same connected component")
             n = l.parent
             while n is not None:
                 if n._context[0] > 1:
@@ -206,4 +202,16 @@ def compute_H0Tree(g):
         return None
     if not isinstance(g, SizeGraph):
         raise ValueError("g Should be a SizeGraph")
-    return H0Tree()
+    """First of all create a set() for each node"""
+    for n in g.nodes:
+        n._context = Set()
+    h = H0Tree()
+    
+    
+    """If there are some isolate nodes they must be represented
+    by isolate node in the H0Tree. Check if some set() associate to 
+    node have no contex (aka H0Tree node)"""
+    for n in g.nodes:
+        if n._context.contex is None:
+            h.add_node(n.phy)
+    return h

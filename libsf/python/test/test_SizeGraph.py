@@ -95,12 +95,22 @@ class Test_010_SizeNode(unittest.TestCase):
         n1.phy = 1.2
         self.assertEqual(1.2, n1.phy)
         self.assertRaises(ValueError, n1.__setattr__, "phy", "pippo")
+    
+    def test_050__contex(self):
+        """Try to set and get node _contex"""
+        g = SG()
+        n = g.add_node()
+        self.assertIsNone(n._context)
+        n._context = "paperino"
+        self.assertEqual("paperino",n._context)
+        n._context = None
+        self.assertIsNone(n._context)
         
 class Test_100_SizeGraph_Extensions(unittest.TestCase):
     """Here I would like to test the advanced options like
     the node factory and the optional arguments of standard
     node factory.
-    Moreover we will test get_connection() function"""
+    Moreover we will test get_connection() e _clea_contex functions"""
     
     def test_add_node(self):
         sg = SG()
@@ -146,6 +156,15 @@ class Test_100_SizeGraph_Extensions(unittest.TestCase):
         for n in nn:
             for m in nn:
                 self.assertTrue((n,m) in connections or (m,n) in connections)
+
+    def test_clean_contex(self):
+        g = SG()
+        for x in xrange(20):
+            g.add_node()._context = x
+        g.clean_context()
+        for n in g.nodes:
+            self.assertIsNone(n._context)
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

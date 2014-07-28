@@ -27,6 +27,7 @@ class SizeNode(object):
         if more is not None:
             self._connect(more)
         self.phy = phy
+        self._context = None
     
     @property
     def sg(self):
@@ -101,3 +102,8 @@ class SizeGraph(object):
                 else:
                     ret.add((m,n))
         return ret
+    
+    def clean_context(self):
+        for n in self.nodes:
+            n._context = None
+    
