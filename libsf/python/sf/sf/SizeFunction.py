@@ -216,13 +216,16 @@ class _AbstractSizeFunction(object):
         return ret
     
     def dump(self, f):
+        pos = 0
         for ssf in self.ssfs:
-            f.write("l %f"%ssf.cornerline)
+            f.write("l %d %f"%(pos,ssf.cornerline))
             if isinstance(ssf, SimpleSizeFunction):
                 f.write(" %f"%ssf.maximum)
             f.write("\n")
+            pos += 1
             for p in ssf.points:
-                f.write("p %f %f\n"%(p.x,p.y))
+                f.write("p %d %f %f\n"%(pos,p.x,p.y))
+                pos += 1
             
             
 
@@ -238,4 +241,52 @@ class SizeFunction(_AbstractSizeFunction):
     Functions with the maximum of measuring function.
     """
     ssf_type = SimpleSizeFunction
-        
+
+def readsf(f, forceold=False):
+    """Read a Size Function from file. It reads a format like the output
+    of the dump function of SizeFunction object. The empty lines and 
+    the lines that starts by # will be ignored.
+    @param f: it could be a open file (implenets readline) or a path 
+    @return a size function 
+    """
+    try:
+        l = f.readline()
+    except AttributeError:
+        """Try to use it as path"""
+        f = file(str(f))
+        l = f.readline()
+    sf = SizeFunctionOld() if forceold else SizeFunction()
+    ssf = None
+    i=1
+    pos=0
+    while l:
+        l = l.strip()
+        if l and not l.startswith("#"):
+            ll = l.split(" ")
+            if ll[0]=='l':
+                if len(ll)<3:
+                    raise ValueError("line %d : wrong syntax must be 'l <n> <min> [max]'"%i)
+                p = int(ll[1])
+                if p != pos :
+                    raise ValueError("line %d : wrong pos %d!=%d"%(i,p,pos))
+                pos += 1
+                M = None
+                if len (ll)>3:
+                    M = float(ll[3])
+                ssf = sf.new_ssf(float(ll[2]),M)
+            elif ll[0]=='p':
+                if len(ll)<4:
+                    raise ValueError("line %d : wrong syntax must be 'p <n> <x> <y>' "%i)
+                if ssf is None:
+                    raise ValueError("line %d : found a point without any line before"%i)
+                p = int(ll[1])
+                if p != pos :
+                    raise ValueError("line %d : wrong pos %d!=%d"%(i,p,pos))
+                pos += 1
+                ssf.add_point(float(ll[2]),float(ll[3]))
+            else:
+                raise ValueError("line %d : cannot understand '%s' "%(i,l))
+        l = f.readline()
+        i += 1
+    return sf
+    

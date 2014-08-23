@@ -8,6 +8,10 @@ import sf.SizeFunction as SF
 from sf.SizeFunction import _AngularPoint as AP 
 from sf.SizeFunction import SimpleSizeFunctionOld
 from sf.SizeFunction import SimpleSizeFunction
+from sf.SizeFunction import readsf
+from cStringIO import StringIO as sio
+import tempfile
+import os
 
 class Test_AngularPoint(unittest.TestCase):
 
@@ -345,6 +349,132 @@ class Test_SizeFunction(unittest.TestCase):
         self.assertIsInstance(sf2, SF.SizeFunction)
         self.assertEqual(sf1, sf2)
         self.assertFalse(sf1 is sf2)
+
+class Test_XXX_SizeFunction_Utils(unittest.TestCase):
+    
+    def test_read_sf_from_file_0000(self):
+        empty = SF.SizeFunctionOld()
+        """Empty"""
+        self.assertEqual(empty, readsf(f = sio()))
+        """Just Empty lines"""
+        self.assertEqual(empty, readsf(f = sio("""
+        
+        """)))
+        """Just Comments"""
+        self.assertEqual(empty, readsf(f = sio("""#Just
+  #S
+ #o
+#m
+  #e
+   #         COMMENTS########
+################""")))
+        """Comments and empty"""
+        self.assertEqual(empty, readsf(f = sio("""# Comment
+################""")))
+        """A Line """
+        sf = SF.SizeFunctionOld()
+        sf.new_ssf(0.0)
+        self.assertEqual(sf, readsf(sio("""l 0 0.0""")))
+        """A Line min max"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(0.0, 1.0)
+        self.assertEqual(sf, readsf(sio("""l 0 0.0 1.0""")))
+        """Two lines min max"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(0.0, 1.0)
+        sf.new_ssf(-30.0, 20.0)
+        self.assertEqual(sf, readsf(sio("""l 0 0.0 1.0
+        l 1 -30 20""")))
+        """Two lines mix"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(0.0, 1.0)
+        sf.new_ssf(-30.0)
+        self.assertEqual(sf, readsf(sio("""l 0 0.0 1.0
+        l 1 -30""")))
+        """Line and points"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(-2.0, 1.0, [(0.1,.5),(-1,0.4)])
+        self.assertEqual(sf, readsf(sio("""l 0 -2.0 1.0
+        p 1 0.1 0.5
+        p 2 -1.0 0.4""")))
+        """Lines and points"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(-2.0, 1.0, [(0.1,.5),(-1,0.4)])
+        sf.new_ssf(-23.0, 31.0, [(-0.1,5),(-12,0.44)])
+        self.assertEqual(sf, readsf(sio("""l 0 -2.0 1.0
+        p 1 0.1 0.5
+        p 2 -1.0 0.4
+        l 3 -23 31
+        p 4 -0.1 5
+        p 5 -12 0.44""")))
+        """Lines and points empty and comments"""
+        sf = SF.SizeFunction()
+        sf.new_ssf(-2.0, 1.0, [(0.1,.5),(-1,0.4)])
+        sf.new_ssf(-23.0, 31.0, [(-0.1,5),(-12,0.44)])
+        self.assertEqual(sf, readsf(sio("""
+        # first comment
+           l 0 -2.0 1.0
+        # second comment
+        
+p 1 0.1 0.5
+   p 2 -1.0 0.4
+        #l 3 -23 31
+        l 3 -23 31
+        #more comment
+        
+        p 4 -0.1 5
+        p 5 -12 0.44
+        
+        """)))
+        
+    def test_read_sf_from_file_asserts(self):
+        """Wrong line"""
+        self.assertRaises(ValueError, readsf, sio("l"))
+        self.assertRaises(ValueError, readsf, sio("l 0"))
+        self.assertRaises(ValueError, readsf, sio("l p"))
+        self.assertRaises(ValueError, readsf, sio("l 0 p"))
+        self.assertRaises(ValueError, readsf, sio("l 0 1 p"))
+        """Wrong point"""
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        p 1"""))
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        p 1 12"""))
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        p 1 p p"""))
+        """Wrong character"""
+        self.assertRaises(ValueError, readsf, sio("c"))
+        """Point without any line"""
+        self.assertRaises(ValueError, readsf, sio("p 0 0 1"))
+        """Wrong Position"""
+        self.assertRaises(ValueError, readsf, sio("l 1 0"))
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        l 2 1"""))
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        l 0 1"""))
+        self.assertRaises(ValueError, readsf, sio("""l 0 0
+        p 2 0 1"""))
+        
+    def test_read_sf_from_file_dump_dual(self):
+        sf = SF.SizeFunction()
+        sf.new_ssf(-10,10, [(-3,2),(-5,-2),(2,9),(-1,1)])
+        sf.new_ssf(-3,12, [(-1,2),(2,10),(2,11),(-1,3)])
+        f=sio()
+        sf.dump(f)
+        f.seek(0)
+        self.assertEqual(sf, readsf(f))
+
+    def test_read_sf_from_file_real_file(self):
+        p = tempfile.mktemp()
+        f = file(p, "w")
+        try:
+            f.write("""l 0 0 1
+            p 1 .1 .5""")
+            f.close()
+            sf = SF.SizeFunction()
+            sf.new_ssf(0,1, [(.1,.5)])
+            self.assertEqual(sf, readsf(p))
+        finally:
+            os.unlink(p)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.test']
