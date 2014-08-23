@@ -4,15 +4,16 @@ Created on 06/lug/2014
 @author: michele
 '''
 import unittest
-from sf.H0Tree import H0Tree as H
+from sf.H0Tree import H0Tree as H, dump_H0
 from sf.H0Tree import H0Node as N
 from sf.H0Tree import compute_H0Tree
 from sf.SizeGraph import SizeGraph as G
 from sf.SizeFunction import SizeFunction as SF
+from test_SizeGraph import TSizeGraph
 import sys
 
 
-class Test_H0Tree(unittest.TestCase):
+class Test_H0Tree(TSizeGraph):
     """Test cases for H0Tree class.
     """
 
@@ -28,6 +29,22 @@ class Test_H0Tree(unittest.TestCase):
         self.assertEqual(0.0, n.phy)
         n = h.add_node(2.0)
         self.assertEqual(2.0, n.phy)
+    
+    def test_x00_copy(self):
+        h = H()
+        self.assertSameGraph(h, h.copy())
+        r0 = h.add_node()
+        self.assertSameGraph(h, h.copy())
+        r1 = h.add_node()
+        self.assertSameGraph(h, h.copy())
+        h.add_node(-1).parent = r0
+        h.add_node(-1.2).parent = r0
+        h.add_node(-0.2).parent = r0
+        h.add_node(-2).parent = r1
+        n = h.add_node(-1).parent = r1
+        h.add_node(-1.4).parent = h.add_node(-1.5).parent = n
+        self.assertSameGraph(h, h.copy())
+        
         
 class Test_H0Node(unittest.TestCase):
     """Like a SizeNode you can use connect() function to connect
@@ -196,6 +213,42 @@ class Test_H0Node(unittest.TestCase):
         nn = h.add_node(-1.0)
         nn.parent = n
         self.assertIs(m,nn.root)
+    
+    def test_union(self):
+        """n is a node of h and m is a root of h where n.phy == m.phy.
+        n.union(m) remove m from the tree and set to all children of
+        m n as parent."""
+        h = H()
+        n = h.add_node()
+        m = h.add_node()
+        n.union(m)
+        self.assertIsNone(m.sg)
+        self.assertIs(h,n.sg)
+        self.assertEqual(1,len(h.nodes))
+        m,m0,m1 = h.add_node(),h.add_node(-1),h.add_node(-1)
+        m0.parent = m1.parent = m
+        n.union(m)
+        self.assertIsNone(m.sg)
+        self.assertIsNot(m,m0.parent)
+        self.assertIsNot(m,m1.parent)
+        self.assertIs(n,m0.parent)
+        self.assertIs(n,m1.parent)
+        m = h.add_node(1)
+        self.assertRaises(ValueError, n.union, m)
+        m = h.add_node(-1)
+        self.assertRaises(ValueError, n.union, m)
+        m.parent = h.add_node()
+        m.parent.parent = h.add_node(1)
+        self.assertRaises(ValueError, n.union, m.parent)
+        """Sanity check"""
+        m.parent.union(n)
+        """Union of self should do nothing"""
+        n = m.root
+        C = set(n.children)
+        n.union(n)
+        self.assertIs(n.sg,h)
+        self.assertIs(n.parent,None)
+        self.assertEqual(n.children,C)
     
     def test_get_min(self):
         """Should return self if the node is a leaf
@@ -537,11 +590,10 @@ class Test_XX_H0Tree_ComputeSF(unittest.TestCase):
             self.assertEqual(sf, o_sf)
         
 class Test_XXX_H0Tree_compute_H0Tree(unittest.TestCase):
-    """We are testing the computing of the H0Tree that represent
-    a SizeGraph.
+    """We are testing the computing H0Trees from SizeGraphs.
     """
     
-    def test_base(self):
+    def test_0000_base(self):
         self.assertIsNone(compute_H0Tree(None))
         self.assertRaises(ValueError,compute_H0Tree, "pippo")
         self.assertRaises(ValueError,compute_H0Tree, 1)
@@ -549,21 +601,111 @@ class Test_XXX_H0Tree_compute_H0Tree(unittest.TestCase):
         self.assertRaises(ValueError,compute_H0Tree, {})
         self.assertIsNotNone(compute_H0Tree(G()))
     
-    def test_base_graph(self):
+    def test_0000_base_graph(self):
         g=G()
         h=H()
         self.assertTrue(h.same(compute_H0Tree(g)))
         g.add_node()
         h.add_node()
         self.assertTrue(h.same(compute_H0Tree(g)))
+    
+    def test_0000_H0Tree_more_connected(self):
+        g=H()
+        g.add_node(0)
+        g.add_node(1)
+        g.add_node(1)
+        self.assertTrue(g.same(compute_H0Tree(g)))
+    
+    def test_0000_H0Tree_compute_more_connected(self):
+        x=H()
+        r = x.add_node(0)
+        n = x.add_node(-2)
+        n.parent = x.add_node(-0.8)
+        n.parent.parent = r
+        x.add_node(-1).parent = x.add_node(-1.2).parent = r
+        x.add_node(1)
+        self.assertIsNotNone(compute_H0Tree(x))
+    
+    def test_x005_H0Tree_node_self_connected(self):
+        """The graph contains a node connected to itself:
+        results a H0Tree with just one node"""
+        h = H()
+        g = G()
+        n = g.add_node()
+        n.connect(n)
+        h.add_node()
+        self.assertTrue(h.same(compute_H0Tree(g)))
         
-    def test_H0Tree_graph(self):
+
+    def test_0010_H0Tree_graph(self):
         g=H()
         h=H()
         for x in [g,h]:
-            x.add_node(-1).parent = x.add_node(-1.2).parent = x.add_node(0)
+            r = x.add_node(0)
+            n = x.add_node(-2)
+            n.parent = x.add_node(-0.8)
+            n.parent.parent = r
+            x.add_node(-1).parent = x.add_node(-1.2).parent = r
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        g.add_node(1)
+        self.assertFalse(h.same(compute_H0Tree(g)))
+        h.add_node(1)
         self.assertTrue(h.same(compute_H0Tree(g)))
 
+    def test_0010_H0Tree_roots_collaps(self):
+        """It is the "V" case and some variations of "reverse V" """
+        h = H()
+        g = G()
+        N = [g.add_node(0),g.add_node(1),g.add_node(1)]
+        N[0].connect(N[1])
+        N[0].connect(N[2])
+        h.add_node(0).parent = h.add_node(1)
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        h = H()
+        g = G()
+
+        N = [g.add_node(0),g.add_node(0.5),g.add_node(-.1),g.add_node(0.5),g.add_node(1),g.add_node(1)]
+        N[0].connect(N[1])
+        N[2].connect(N[3])
+        N[1].connect(N[4])
+        N[3].connect(N[5])
+        N[4].connect(N[5])
+        h.add_node(0).parent = h.add_node(-.1).parent = h.add_node(1)
+        dump_H0(h)
+        hh = compute_H0Tree(g)
+        dump_H0(hh)
+        self.assertTrue(h.same(hh))
+        
+        
+    def test_x010_H0Tree_lot_of_nodes_just_a_node(self):
+        """The graph contains lot of nodes at the same phy:
+        results a H0Tree with just one node for each connected
+        component"""
+        h = H()
+        g = G()
+        nn = [g.add_node() for _ in xrange(3)]
+        for i in xrange(len(nn)-1):
+            nn[i].connect(nn[i+1])
+        hh = [h.add_node()]
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        for i in xrange(len(nn)-1):
+            for j in xrange(0, len(nn), 2):
+                nn[i].connect(nn[j])
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        mm = [g.add_node() for _ in xrange(5)]
+        for i in xrange(len(mm)-1):
+            mm[i].connect(mm[i+1])
+        hh += [h.add_node()]
+        self.assertTrue(h.same(compute_H0Tree(g)))
+        """Now we build another island at 1 and 
+        connect it to the two connected components"""
+        ss = [g.add_node(1) for _ in xrange(4)]
+        for i in xrange(len(ss)-1):
+            ss[i].connect(ss[i+1])
+        nn[0].connect(ss[1])
+        mm[2].connect(ss[3])
+        hh[0].parent = hh[1].parent = h.add_node(1) 
+        self.assertTrue(h.same(compute_H0Tree(g)))
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

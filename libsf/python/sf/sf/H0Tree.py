@@ -8,6 +8,7 @@ from SizeFunction import SizeFunction
 import weakref
 from UnionFind import Set
 from operator import attrgetter
+import sys
 
 class H0Node(SizeNode):
     
@@ -63,19 +64,32 @@ class H0Node(SizeNode):
     def is_leaf(self):
         return not self.children
     
+    def _sub_computing_leafs(self):
+        to_compute = [self]
+        to_fill = []
+        """First step BFS and put in stack all nodes to compute.
+        For the leafs set the value to the list composed by the node
+        """
+        while to_compute:
+            n = to_compute.pop()
+            if n.is_leaf:
+                n.__leafs = [n]
+            else:
+                for c in n.children:
+                    if c.__leafs is None:
+                        to_compute.append(c)
+                to_fill.append(n)
+        """Remove from the stack and compute the __leafs property:
+        We are sure that the children are already computed."""
+        while to_fill:
+            n = to_fill.pop()
+            n.__leafs = sum([c.__leafs for c in n.children],[])
+    
     @property
     def leafs(self):
-        if self.__leafs is not None:
-            return self.__leafs
-        elif self.is_leaf:
-            ret = [self]
-        else:
-            ret = [e for e in self.children if e.is_leaf]
-            for e in self.children:
-                if not e.is_leaf:
-                    ret += e.leafs
-        self.__leafs = ret
-        return ret
+        if self.__leafs is None:
+            self._sub_computing_leafs()
+        return self.__leafs[:]
     
     @property
     def root(self):
@@ -84,6 +98,26 @@ class H0Node(SizeNode):
             r = r.parent
         return r
     
+    def union(self, m):
+        """m is a root and self.phy == m.phy.
+        Remove m from the tree and set to all children of
+        m self as parent.
+        
+        @param m: a root of the graph where m.phy is self.phy
+        """
+        self._check_node(m)
+        if m.phy != self.phy:
+            raise ValueError("The phy value MUST be the same")
+        if m.parent is not None:
+            raise ValueError("m MUST be a root")
+        if self is m:
+            """Nothing to do"""
+            return
+        C = m.children
+        self.sg.remove_node(m)
+        for c in C:
+            c._set_parent(self)
+        
     def get_min(self):
         """Should return self if the node is a leaf
         or has more than one child; otherwise
@@ -133,6 +167,9 @@ class H0Tree(SizeGraph):
         Constructor
         '''
         super(H0Tree,self).__init__(nodes_factory=H0Node)
+    
+    def _obj(self):
+        return H0Tree()
     
     @property
     def leafs(self):
@@ -202,30 +239,63 @@ def compute_H0Tree(g):
     if g is None:
         return None
     if not isinstance(g, SizeGraph):
-        raise ValueError("g Should be a SizeGraph")
+        raise ValueError("g Must be a SizeGraph")
     h = H0Tree()
+    g.clean_context()
     """For each nodes (sorted by phy)"""
     for n in sorted(g.nodes,key=attrgetter('phy')):
-        """Use contex to store unioin-find set"""
-        sn = n._context = Set()
-        """The node of h associate to the set of n... it is None"""
-        hn = None
         """Connetions to "lower" node: aka the nodes already computed"""
         nodes = [m for m in n._connected if m._context is not None]
+        """Use contex to store unioin-find set"""
+        sn = n._context = Set()
+        """The node of h associated to the set of n... it is None"""
+        hn = None
+        if not nodes:
+            """Nodes was empty:
+            Create a new node for the leafs""" 
+            sn.contex = h.add_node(n.phy)
         for m in nodes:
             sm = m._context
             """The node of h associate to the set of m"""
             hm = sm.contex
-            if n.phy == m.phy :
-                sm.union(sn)
-                hn = hm
+            if n.phy == hm.phy :
+                if hn is not None:
+                    hn.union(hm)
+                else:
+                    hn = hm
             elif hn != hm:
                 if hn is None:
                     """I need to create a new node""" 
                     hn = sn.contex = h.add_node(n.phy)
-                """hm is the parent of hm"""
+                """hn is the parent of hm"""
                 hm.parent = hn
-        if hn is None:
-            """Create a new node for the leafs""" 
-            sn.contex = h.add_node(n.phy)
+            """Anyway I must union the sets and use hn as context"""
+            sm.union(sn, hn)
     return h
+
+
+def _dump_subtree(n, ind=0, fid = sys.stdout):
+    v = ""
+    if n.parent:
+        v="^%d"%n.parent._context
+    fid.write("[%d%s] %f\n"%(n._context,v,n.phy))
+    for m in n.children:
+        ind += 1
+        m._context = ind
+        ind = _dump_subtree(m, ind, fid)
+    return ind
+
+def dump_H0(h, roots=[], fid = sys.stdout):
+    first = True
+    i = -1
+    if not roots:
+        roots = [n for n in h.nodes if n.parent is None]
+    for r in roots:
+        if not first:
+            fid.write("#############\n")
+        first = False
+        i += 1
+        r._context = i
+        i = _dump_subtree(r, i, fid)
+    
+    fid.write("############## DONE ##############\n")   
