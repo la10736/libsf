@@ -32,6 +32,8 @@ class SizeNode(object):
     @property
     def sg(self):
         """The SizeGraph that contain the node"""
+        if self._sg is None:
+            return None
         return self._sg()
     
     def _connect(self,other):
@@ -51,6 +53,18 @@ class SizeNode(object):
         self._check_node(other)
         self._connect(other)
         
+    def _disconnect(self,other):
+        self._connected.remove(other)
+        other._connected.remove(self)
+
+    def disconnect(self, other):
+        """Disconnect from self to the other SizeNode 
+        @param other: other SizeNode
+        """
+        self._check_node(other)
+        if other in self._connected:
+            self._disconnect(other)
+    
     @property
     def connected(self):
         """The set of the nodes that are connected to self"""
@@ -85,6 +99,16 @@ class SizeGraph(object):
         self._nodes.add(n)
         return n
     
+    def remove_node(self, n):
+        if n is None:
+            raise ValueError("Invalid node")
+        if n.sg != self:
+            raise ValueError("Node from other graph")
+        for m in n.connected:
+            n._disconnect(m)
+        self._nodes.remove(n)
+        n._sg = None
+    
     @property
     def nodes_factory(self):
         return self._nodes_factory
@@ -107,3 +131,122 @@ class SizeGraph(object):
         for n in self.nodes:
             n._context = None
     
+    def _obj(self):
+        return self.__class__(self.nodes_factory)
+    
+    def copy(self):
+        ret = self._obj()
+        for n in self.nodes:
+            n._contex = ret.add_node(n.phy)
+        for n in self.nodes:
+            for m in n.connected:
+                n._contex.connect(m._contex)
+        self.clean_context()
+        return ret
+    
+    def dump(self, f, legacy=False, comments=True):
+        if legacy:
+            comments=False
+        if comments:
+            f = _check_and_write(f, "# Size Graph File\n")
+        
+        N = [n for n in self.nodes]
+        if not N:
+            if comments:
+                f.write("# Empty\n")
+            return
+        if comments:
+            f.write("# Nodes:\n")
+        f = _check_and_write(f, "%d\n"%len(N))
+        if not legacy:
+            if comments:
+                f.write("# Measuring Function\n")
+            f.write("MS\n")
+            for n in N:
+                f.write(str(n.phy)+"\n")
+        C = self.get_connections()
+        if not C:
+            if comments:
+                f.write("# No Edges\n")
+            return
+        if comments:
+            f.write("# Edges:\n")
+        for i,n in enumerate(N):
+            n._context = i
+        f.write("%d\n"%len(C))
+        for c in C:
+            f.write("%d %d\n"%(c[0]._context,c[1]._context))
+        if comments:
+            f.write("# End Graph\n")
+        self.clean_context()
+        
+def _check_and_write(f,m):
+    try:
+        f.write(m)
+    except AttributeError:
+        """Try to use it as path"""
+        f = file(str(f),"w")
+        f.write(m)
+    return f
+
+def _rl(l):
+    l = l.strip()
+    if l.startswith("#"):
+        return ''
+    return l
+
+def _next_l(f):
+    l = f.readline()
+    while l:
+        l = _rl(l)
+        if l:
+            break
+        l = f.readline()
+    return l
+    
+        
+def readsg(f, ms=None):
+    """Read a size graph from f and, eventually, apply the measuring function
+    ms. The format is simple:
+    1) lines that starts by # or empty will be ignored
+    2) the first no empty line is the number of nodes N
+    3) if the next items is the string MS the next N valid lines will be used as 
+    measuring function
+    4) the next valid items will be the number of edges E and E couples of
+    index "n m" that are the edges where n is the index of the starting node
+    and m the ending node
+     
+    @param f: the open file (a object with readline() function) where is the graph.
+    if is not a file will try to use it as a path for the file where reading.
+    @param ms: the measuring function where the phy of n-th node will be ms[n]
+    @return the SizeGraph
+    """
+    try:
+        l = _next_l(f)
+    except AttributeError:
+        """Try to use it as path"""
+        f = file(str(f))
+        l = _next_l(f)
+    g = SizeGraph()
+    if not l:
+        return g
+    N = int(l)
+    l = _next_l(f)
+    if l == "MS":
+        fms = [float(_next_l(f)) for _ in xrange(N)]
+        if ms is None:
+            ms = fms
+        l = _next_l(f)
+    if ms is None:
+        ms = [0 for _ in xrange(N)]
+    elif len(ms)<N:
+        raise ValueError("Not enough values for ms (%d<%d)"%(len(ms),N))
+    NN = [g.add_node(ms[i]) for i in xrange(N)]
+    if not l:
+        """No Edges"""
+        return g
+    M = int(l)
+    for _ in xrange(M):
+        n0,n1 = map(lambda x:NN[int(x)], _next_l(f).split(" "))
+        n0.connect(n1)
+    return g
