@@ -191,7 +191,7 @@ class H0Tree(SizeGraph):
             n._context = [len(n.children),None]
     
     def get_sf(self):
-        leafs = sorted(self.leafs, key=lambda n:n.phy, reverse=True)
+        leafs = sorted(self.leafs, key=attrgetter('phy'), reverse=True)
         self._init_context()
         sf = SizeFunction()
         for l in leafs:
@@ -201,7 +201,7 @@ class H0Tree(SizeGraph):
                 n = n.parent
             if n is None:
                 r = l.root
-                cl = min(map(lambda n:n.phy, r.leafs))
+                cl = min(r.leafs, key=attrgetter('phy')).phy
                 ssf = sf.new_ssf(cl,r.phy)
             else:
                 ssf = n._context[1]
