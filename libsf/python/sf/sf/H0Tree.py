@@ -129,15 +129,26 @@ class H0Node(SizeNode):
             raise ValueError("m MUST be a root")
         self._union(m)
     
+    @property
+    def is_data_node(self):
+        return self.n_children != 1
+    
+    @property
+    def is_useful_node(self):
+        return self._parent is None or self.is_data_node
+    
     def get_min(self):
         """Should return self if the node is a leaf
         or has more than one child; otherwise
         return the first child that is a leaf or has
         more than one child"""
-        _cc = self.children
-        if not _cc or len(_cc)>1:
-            return self
-        return _cc.pop().get_min()
+        c = self
+        while not c.is_data_node:
+            for cc in c._connected:
+                if cc is not c.parent:
+                    c = cc
+                    break
+        return c
     
     def equal_subtree(self, other):
         """Return true if the sub tree with self as root is equal
