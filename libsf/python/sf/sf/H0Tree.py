@@ -250,10 +250,11 @@ def compute_H0Tree(g):
         sn = n._context = Set()
         """The node of h associated to the set of n... it is None"""
         hn = None
+        phy = n.phy
         if not nodes:
             """Nodes was empty:
             Create a new node for the leafs""" 
-            sn.contex = h.add_node(n.phy)
+            sn.contex = h.add_node(phy)
         for m in nodes:
             sm = m._context
             """The node of h associate to the set of m"""
@@ -268,8 +269,8 @@ def compute_H0Tree(g):
                 We use hm._phy instead the property because we are sure that
                 will not brake the tree nodes rules on phy.
                 """ 
-                hm.phy = n.phy
-            if n.phy == hm.phy :
+                hm._phy = phy
+            if phy == hm._phy :
                 if hn is not None:
                     hn.union(hm)
                 else:
@@ -277,7 +278,7 @@ def compute_H0Tree(g):
             elif hn != hm:
                 if hn is None:
                     """I need to create a new node""" 
-                    hn = sn.contex = h.add_node(n.phy)
+                    hn = sn.contex = h.add_node(phy)
                 """hn is the parent of hm"""
                 hm.parent = hn
             """Anyway I must union the sets and use hn as context"""
