@@ -258,6 +258,17 @@ def compute_H0Tree(g):
             sm = m._context
             """The node of h associate to the set of m"""
             hm = sm.contex
+            if len(hm._connected) == 1:
+                """If hm is not a leaf or a node with more than one child
+                we can consider it like the same phy of n.
+                By that trick we will remove all nodes with just one child that 
+                are not the roots of trees.
+                We use len(hm._connected) == 1 instead of hm.is_data_node for
+                optimization (hm cannot have parent).
+                We use hm._phy instead the property because we are sure that
+                will not brake the tree nodes rules on phy.
+                """ 
+                hm.phy = n.phy
             if n.phy == hm.phy :
                 if hn is not None:
                     hn.union(hm)
