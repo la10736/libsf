@@ -98,6 +98,15 @@ class H0Node(SizeNode):
             r = r.parent
         return r
     
+    def _union(self, m):
+        if self is m:
+            """Nothing to do"""
+            return
+        C = m.children
+        self.sg.remove_node(m)
+        for c in C:
+            c._set_parent(self)
+    
     def union(self, m):
         """m is a root and self.phy == m.phy.
         Remove m from the tree and set to all children of
@@ -110,14 +119,8 @@ class H0Node(SizeNode):
             raise ValueError("The phy value MUST be the same")
         if m.parent is not None:
             raise ValueError("m MUST be a root")
-        if self is m:
-            """Nothing to do"""
-            return
-        C = m.children
-        self.sg.remove_node(m)
-        for c in C:
-            c._set_parent(self)
-        
+        self._union(m)
+    
     def get_min(self):
         """Should return self if the node is a leaf
         or has more than one child; otherwise
@@ -272,7 +275,9 @@ def compute_H0Tree(g):
                 hm._phy = phy
             if phy == hm._phy :
                 if hn is not None:
-                    hn.union(hm)
+                    """We know what we are doing so we can call _union() 
+                    to bypass checking conditions"""
+                    hn._union(hm)
                 else:
                     hn = hm
             elif hn != hm:
