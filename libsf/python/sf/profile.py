@@ -20,6 +20,7 @@ sf_dir = os.path.join(base_path,'out')
 sf_ext = '.sf'
 outdir = 'out_train'
 N = 1
+SF_FACTOR=1000
 
 def _get_graph(f):
     b = os.path.basename(f).rsplit('.')[0]
@@ -51,10 +52,11 @@ if __name__ == '__main__':
     pr.disable()
     pstats.Stats(pr, stream=sys.stdout).sort_stats(sortby).print_stats()
     print "#"*80
-    print "="*20 + "PROFILING SF COMPUTATION" + "="*20
+    print "="*20 + "PROFILING SF COMPUTATION [*%d]"%SF_FACTOR + "="*20
     pr = cProfile.Profile()
     pr.enable()
-    sfs = [h.get_sf() for h in h0s]
+    for i in xrange(SF_FACTOR):
+        sfs = [h.get_sf() for h in h0s]
     pr.disable()
     pstats.Stats(pr, stream=sys.stdout).sort_stats(sortby).print_stats()
     print "\n".join(["#"*80]*2)

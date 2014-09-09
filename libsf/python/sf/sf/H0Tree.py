@@ -56,13 +56,21 @@ class H0Node(SizeNode):
     def add_children(self, *args):
         for c in args:
             self._add_child(c)
+    
+    @property
+    def n_children(self):
+        ret = len(self._connected)
+        if self._parent is not None:
+            return ret-1
+        return ret
+    
     @property
     def children(self):
-        return set([n for n in self.connected if n != self.parent])
+        return set([n for n in self._connected if n != self.parent])
     
     @property
     def is_leaf(self):
-        return not self.children
+        return not self.n_children
     
     def _sub_computing_leafs(self):
         to_compute = [self]
