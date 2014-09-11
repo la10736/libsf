@@ -21,6 +21,7 @@ sf_ext = '.sf'
 outdir = 'out_train'
 N = 1
 SF_FACTOR=1000
+H0_FACTOR=50
 
 def _get_graph(f):
     b = os.path.basename(f).rsplit('.')[0]
@@ -44,11 +45,12 @@ if __name__ == '__main__':
     
     i = 0
     N = len(elements)
-    print "="*20 + "PROFILING H0 COMPUTATION" + "="*20
+    print "="*20 + "PROFILING H0 COMPUTATION [*%d]"%H0_FACTOR + "="*20
     pr = cProfile.Profile()
     sortby = 'time'
     pr.enable()
-    h0s = [H0Tree.compute_H0Tree(g) for g in elements]
+    for i in xrange(H0_FACTOR):
+        h0s = [H0Tree.compute_H0Tree(g) for g in elements]
     pr.disable()
     pstats.Stats(pr, stream=sys.stdout).sort_stats(sortby).print_stats()
     print "#"*80
