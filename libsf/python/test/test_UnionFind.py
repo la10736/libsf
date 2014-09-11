@@ -6,7 +6,7 @@ Created on 26/lug/2014
 import unittest
 import sf.UnionFind
 
-class Test_Base_Union_Find(unittest.TestCase):
+class Test_000_Base_Union_Find(unittest.TestCase):
 
     impl = sf.UnionFind.Set
 
@@ -51,10 +51,13 @@ class Test_Base_Union_Find(unittest.TestCase):
         for a in [c,d,e,f]:
             self.assertEqual("sss", a.contex)
 
-class Test_Rank_Union_Find(Test_Base_Union_Find):
+class Test_010_UnionFind_by_rank(Test_000_Base_Union_Find):
     
     impl = sf.UnionFind.UnionFind_by_rank
 
+class Test_020_UnionFind_by_halving_and_rank(Test_000_Base_Union_Find):
+    
+    impl = sf.UnionFind.UnionFind_by_halving_and_rank
 
 
 if __name__ == "__main__":

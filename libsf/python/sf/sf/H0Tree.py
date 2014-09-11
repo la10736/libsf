@@ -6,7 +6,7 @@ Created on 06/lug/2014
 from SizeGraph import SizeGraph, SizeNode
 from SizeFunction import SizeFunction
 import weakref
-from UnionFind import UnionFind_by_rank as Set
+from UnionFind import UnionFind_by_halving_and_rank as Set
 from operator import attrgetter
 import sys
 

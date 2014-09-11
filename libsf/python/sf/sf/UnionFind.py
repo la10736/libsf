@@ -63,8 +63,9 @@ A(n) = 2**A(n-1)
 '''
 
 class UnionFind_by_rank(Set):
-    """The union by rank and halving implementation that collapse to the root one over two node in
+    """The union by rank implementation that collapse to the root one over two node in
     the path to the root"""
+    
     def __init__(self, context=None):
         '''Create an empty union find data structure.'''
         super(UnionFind_by_rank,self).__init__(context)
@@ -73,10 +74,8 @@ class UnionFind_by_rank(Set):
     def _find_impl(self):
         stk = []
         root = self
-        while root._parent is not None and root._parent._parent is not None :
+        while root._parent is not None:
             stk.append(root)
-            root = root._parent._parent
-        if root._parent is not None:
             root = root._parent
         for p in stk:
             p._parent = root
@@ -90,4 +89,16 @@ class UnionFind_by_rank(Set):
             other = self
         other._parent = root
         root._rank += other._rank
+        return root
+
+class UnionFind_by_halving_and_rank(UnionFind_by_rank):
+    """Halving implementation dosn't use stack to collapse node to the root but it
+    use a "halving" technique to reduce the next serch withot any stack use"""
+    
+    def _find_impl(self):
+        root = self
+        while root._parent is not None:
+            if root._parent._parent is not None:
+                root._parent = root._parent._parent
+            root = root._parent
         return root
