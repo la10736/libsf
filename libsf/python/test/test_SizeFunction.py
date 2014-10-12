@@ -214,8 +214,8 @@ class Test_SimpleSizeFunction(unittest.TestCase):
         self.assertNotEqual(ssf2, ssf1)
         
     def test_Create_nominal_args(self):
-        ssf1 = SimpleSizeFunction(cl=-2, M=5, points=[(1, 2), (2, 3)])
-        ssf2 = SimpleSizeFunction(points=[(1, 2), (2, 3)], cl=-2, M=5)
+        ssf1 = SimpleSizeFunction(cl=-2, m=5, points=[(1, 2), (2, 3)])
+        ssf2 = SimpleSizeFunction(points=[(1, 2), (2, 3)], cl=-2, m=5)
         self.assertEqual(ssf1, ssf2)
 
     def test_copy(self):
@@ -297,7 +297,7 @@ class Test_SizeFunction(unittest.TestCase):
     
     def test_new_ssf(self):
         sf = SF.SizeFunction()
-        ssf = sf.new_ssf(cl=-2, M=5, points=((0, 1), (1, 2)))
+        ssf = sf.new_ssf(cl=-2, m=5, points=((0, 1), (1, 2)))
         self.assertIsInstance(ssf, SimpleSizeFunction)
         self.assertEqual(ssf, SimpleSizeFunction(-2, 5, ((0, 1), (1, 2))))
         ssf = sf.new_ssf(cl=-2, points=((0, 1), (1, 2)))
@@ -305,7 +305,7 @@ class Test_SizeFunction(unittest.TestCase):
         
     def test_add(self):
         sf = SF.SizeFunction()
-        ssf = SimpleSizeFunction(cl=-2, M=5, points=((0, 1), (1, 2)))
+        ssf = SimpleSizeFunction(cl=-2, m=5, points=((0, 1), (1, 2)))
         sf.add(ssf)
         self.assertEqual(ssf, sf._ssfs[0])
         self.assertFalse(ssf is sf._ssfs[0])

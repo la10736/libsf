@@ -10,68 +10,68 @@ from UnionFind import UnionFind_by_halving_and_rank as Set
 from operator import attrgetter
 import sys
 
+
 class H0Node(SizeNode):
-    
     def __init__(self, *args, **kwargs):
         self._parent = None
         self.__leafs = None
-        super(H0Node,self).__init__(*args, **kwargs)
-    
+        super(H0Node, self).__init__(*args, **kwargs)
+
     @property
     def parent(self):
         if self._parent is None:
             return None
         return self._parent()
-    
+
     def _invalidate_leafs(self):
         p = self
         while p:
             p.__leafs = None
             p = p.parent
-    
+
     def _set_parent(self, p):
         self._connect(p)
         self._parent = weakref.ref(p)
         p._invalidate_leafs()
-        
+
     @parent.setter
     def parent(self, p):
         if self.phy >= p.phy:
             raise ValueError("Cannot set the parent : the measuring function MUST be greater")
         self._set_parent(p)
-        
+
     def connect(self, other):
         self._check_node(other)
         if self.phy < other.phy:
             return self._set_parent(other)
         elif self.phy > other.phy:
             return other._set_parent(self)
-        raise ValueError("Cannot coonect two node with the same measuring function value")
-        
-    def _add_child(self,c):
+        raise ValueError("Cannot connect two node with the same measuring function value")
+
+    def _add_child(self, c):
         if self.phy <= c.phy:
             raise ValueError("Cannot set the children : the measuring function MUST be lower")
         c.parent = self
-        
+
     def add_children(self, *args):
         for c in args:
             self._add_child(c)
-    
+
     @property
     def n_children(self):
         ret = len(self._connected)
         if self._parent is not None:
-            return ret-1
+            return ret - 1
         return ret
-    
+
     @property
     def children(self):
         return set([n for n in self._connected if n != self.parent])
-    
+
     @property
     def is_leaf(self):
         return not self.n_children
-    
+
     def _sub_computing_leafs(self):
         to_compute = [self]
         to_fill = []
@@ -91,30 +91,30 @@ class H0Node(SizeNode):
         We are sure that the children are already computed."""
         while to_fill:
             n = to_fill.pop()
-            n.__leafs = sum([c.__leafs for c in n.children],[])
-    
+            n.__leafs = sum([c.__leafs for c in n.children], [])
+
     @property
     def leafs(self):
         if self.__leafs is None:
             self._sub_computing_leafs()
         return self.__leafs[:]
-    
+
     @property
     def root(self):
         r = self
         while r.parent:
             r = r.parent
         return r
-    
+
     def _union(self, m):
         if self is m:
             """Nothing to do"""
             return
-        C = m.children
+        cc = m.children
         self.sg.remove_node(m)
-        for c in C:
+        for c in cc:
             c._set_parent(self)
-    
+
     def union(self, m):
         """m is a root and self.phy == m.phy.
         Remove m from the tree and set to all children of
@@ -128,15 +128,15 @@ class H0Node(SizeNode):
         if m.parent is not None:
             raise ValueError("m MUST be a root")
         self._union(m)
-    
+
     @property
     def is_data_node(self):
         return self.n_children != 1
-    
+
     @property
     def is_useful_node(self):
         return self._parent is None or self.is_data_node
-    
+
     def get_min(self):
         """Should return self if the node is a leaf
         or has more than one child; otherwise
@@ -149,7 +149,7 @@ class H0Node(SizeNode):
                     c = cc
                     break
         return c
-    
+
     def equal_subtree(self, other):
         """Return true if the sub tree with self as root is equal
         to the sub tree with the root in other
@@ -160,7 +160,7 @@ class H0Node(SizeNode):
             raise ValueError("other must be a H0Node")
         if self.phy != other.phy:
             return False
-        scc,occ = self.children,other.children
+        scc, occ = self.children, other.children
         if len(scc) != len(occ):
             return False
         for sc in scc:
@@ -173,8 +173,6 @@ class H0Node(SizeNode):
                 return False
             occ.remove(f)
         return True
-            
-        
 
 
 class H0Tree(SizeGraph):
@@ -188,32 +186,31 @@ class H0Tree(SizeGraph):
         '''
         Constructor
         '''
-        super(H0Tree,self).__init__(nodes_factory=H0Node)
-    
+        super(H0Tree, self).__init__(nodes_factory=H0Node)
+
     def _obj(self):
         return H0Tree()
-    
+
     @property
     def leafs(self):
         return [l for l in self.nodes if l.is_leaf]
-    
+
     def _init_context(self):
         for n in self.nodes:
-            n._context = [len(n.children),None]
-    
+            n._context = [len(n.children), None]
+
     def get_sf(self):
         leafs = sorted(self.leafs, key=attrgetter('phy'), reverse=True)
         self._init_context()
         sf = SizeFunction()
         for l in leafs:
             n = l
-            ssf = n._context[1]
             while n is not None and n._context[1] is None:
                 n = n.parent
             if n is None:
                 r = l.root
                 cl = min(r.leafs, key=attrgetter('phy')).phy
-                ssf = sf.new_ssf(cl,r.phy)
+                ssf = sf.new_ssf(cl, r.phy)
             else:
                 ssf = n._context[1]
             n = l
@@ -230,9 +227,9 @@ class H0Tree(SizeGraph):
                 n = n.parent
             if n is not None:
                 n._context[0] -= 1
-                ssf.add_point(l.phy,n.phy)
+                ssf.add_point(l.phy, n.phy)
         return sf
-        
+
     def same(self, other):
         if other is None or not isinstance(other, H0Tree):
             raise ValueError("You can compare H0Tree only")
@@ -241,7 +238,7 @@ class H0Tree(SizeGraph):
         if len(sroots) != len(oroots):
             return False
         for rs in sroots:
-            found = None
+            ro = found = None
             for ro in oroots:
                 if rs.equal_subtree(ro):
                     found = ro
@@ -251,6 +248,7 @@ class H0Tree(SizeGraph):
             else:
                 return False
         return True
+
 
 def compute_H0Tree(g):
     """Compute the H0Tree from the SizeGraph G. 
@@ -265,8 +263,8 @@ def compute_H0Tree(g):
     h = H0Tree()
     g.clean_context()
     """For each nodes (sorted by phy)"""
-    for n in sorted(g.nodes,key=attrgetter('phy')):
-        """Connetions to "lower" node: aka the nodes already computed"""
+    for n in sorted(g.nodes, key=attrgetter('phy')):
+        """Connections to "lower" node: aka the nodes already computed"""
         nodes = [m for m in n._connected if m._context is not None]
         """Use contex to store unioin-find set"""
         sn = n._context = Set()
@@ -275,7 +273,7 @@ def compute_H0Tree(g):
         phy = n.phy
         if not nodes:
             """Nodes was empty:
-            Create a new node for the leafs""" 
+            Create a new node for the leafs"""
             sn.contex = h.add_node(phy)
         for m in nodes:
             sm = m._context
@@ -290,9 +288,9 @@ def compute_H0Tree(g):
                 optimization (hm cannot have parent).
                 We use hm._phy instead the property because we are sure that
                 will not brake the tree nodes rules on phy.
-                """ 
+                """
                 hm._phy = phy
-            if phy == hm._phy :
+            if phy == hm._phy:
                 if hn is not None:
                     """We know what we are doing so we can call _union() 
                     to bypass checking conditions"""
@@ -301,7 +299,7 @@ def compute_H0Tree(g):
                     hn = hm
             elif hn != hm:
                 if hn is None:
-                    """I need to create a new node""" 
+                    """I need to create a new node"""
                     hn = sn.contex = h.add_node(phy)
                 """hn is the parent of hm"""
                 hm.parent = hn
@@ -310,18 +308,19 @@ def compute_H0Tree(g):
     return h
 
 
-def _dump_subtree(n, ind=0, fid = sys.stdout):
+def _dump_subtree(n, ind=0, fid=sys.stdout):
     v = ""
     if n.parent:
-        v="^%d"%n.parent._context
-    fid.write("[%d%s] %f\n"%(n._context,v,n.phy))
+        v = "^%d" % n.parent._context
+    fid.write("[%d%s] %f\n" % (n._context, v, n.phy))
     for m in n.children:
         ind += 1
         m._context = ind
         ind = _dump_subtree(m, ind, fid)
     return ind
 
-def dump_H0(h, roots=[], fid = sys.stdout):
+
+def dump_H0(h, roots=None, fid=sys.stdout):
     first = True
     i = -1
     if not roots:
@@ -333,5 +332,5 @@ def dump_H0(h, roots=[], fid = sys.stdout):
         i += 1
         r._context = i
         i = _dump_subtree(r, i, fid)
-    
+
     fid.write("############## DONE ##############\n")   
