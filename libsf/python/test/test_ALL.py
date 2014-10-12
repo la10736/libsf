@@ -4,6 +4,9 @@ Created on 23/ago/2014
 @author: michele
 '''
 
+from test_SizeGraph import *
+from test_UnionFind import *
+from test_H0Tree import *
 from test_SizeFunction import *
 
 
